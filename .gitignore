@@ -1,0 +1,5 @@
+# Logs e temporarios
+*.log
+.DS_Store
+Thumbs.db
+.agents/

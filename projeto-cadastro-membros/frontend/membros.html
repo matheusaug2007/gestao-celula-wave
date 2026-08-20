@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Membros - Cadastro de Membros</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" type="image/png" href="imagens/IMG_2261.PNG">
+  <style>
+    .membros-container {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    }
+
+    .membros-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--espaco-xl) var(--espaco-md);
+    }
+
+    .membros-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--espaco-md);
+      margin-bottom: var(--espaco-xl);
+      flex-wrap: wrap;
+    }
+
+    .membros-header .busca-topo {
+      flex: 1;
+      min-width: 320px;
+      max-width: 920px;
+      margin: 0 var(--espaco-sm);
+    }
+
+    .membros-header h1 {
+      font-size: var(--fonte-tamanho-xl);
+      color: var(--cor-fundo-dark);
+      margin: 0;
+    }
+
+    .btn-novo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--espaco-sm);
+      padding: var(--espaco-md) var(--espaco-lg);
+      background: linear-gradient(135deg, var(--cor-primaria) 0%, var(--cor-primaria-dark) 100%);
+      color: var(--cor-fundo);
+      border: none;
+      border-radius: var(--raio-md);
+      text-decoration: none;
+      font-weight: var(--fonte-peso-semibold);
+      box-shadow: var(--sombra-md);
+      transition: all var(--transicao-rapida);
+    }
+
+    .btn-novo:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--sombra-lg);
+    }
+
+    .btn-novo svg,
+    .btn-toggle-filtros svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .filtros-layout {
+      position: relative;
+    }
+
+    .btn-toggle-filtros {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--espaco-sm);
+      margin-top: var(--espaco-lg);
+      margin-bottom: var(--espaco-sm);
+      padding: var(--espaco-sm) var(--espaco-md);
+      border: none;
+      border-radius: var(--raio-md);
+      background: linear-gradient(135deg, var(--cor-primaria) 0%, var(--cor-primaria-dark) 100%);
+      color: var(--cor-fundo);
+      font-weight: var(--fonte-peso-semibold);
+      cursor: pointer;
+      transition: all var(--transicao-rapida);
+    }
+
+    .btn-toggle-filtros:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--sombra-lg);
+    }
+
+    .overlay-filtros {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      z-index: 999;
+    }
+
+    .overlay-filtros.ativo {
+      display: block;
+    }
+
+    .filtros-sidebar {
+      position: fixed;
+      top: 0;
+      left: -500px;
+      width: 480px;
+      max-width: 92vw;
+      height: 100dvh;
+      background: var(--cor-fundo);
+      box-shadow: 6px 0 24px rgba(15, 23, 42, 0.18);
+      border-radius: 0 var(--raio-lg) var(--raio-lg) 0;
+      z-index: 1000;
+      padding: var(--espaco-xl) var(--espaco-md);
+      overflow-y: auto;
+      transition: left 0.28s ease-out;
+    }
+
+    .filtros-sidebar.aberto {
+      left: 0;
+    }
+
+    .btn-fechar-filtros {
+      position: absolute;
+      top: var(--espaco-md);
+      right: var(--espaco-md);
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--cor-fundo-dark);
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .filtros-sidebar-titulo {
+      font-size: var(--fonte-tamanho-lg);
+      font-weight: var(--fonte-peso-bold);
+      color: var(--cor-fundo-dark);
+      margin-bottom: var(--espaco-lg);
+    }
+
+    .filtros-secao {
+      margin-bottom: var(--espaco-lg);
+    }
+
+    .filtros-secao-titulo {
+      margin-bottom: var(--espaco-sm);
+      font-size: var(--fonte-tamanho-sm);
+      font-weight: var(--fonte-peso-semibold);
+      color: var(--cor-primaria);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .filtros-dinamicos-lista {
+      display: flex;
+      flex-direction: column;
+      gap: var(--espaco-sm);
+    }
+
+    .filtro-dinamico-item {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1.2fr auto;
+      gap: var(--espaco-sm);
+      align-items: center;
+      padding: var(--espaco-sm);
+      border: 1px solid var(--cor-borda);
+      border-radius: var(--raio-md);
+      background: #f8fafc;
+    }
+
+    .filtro-dinamico-item select,
+    .filtro-dinamico-item input,
+    .toolbar-right select,
+    .redistribuicao-item select,
+    #liderSelectReativacao {
+      width: 100%;
+      padding: var(--espaco-sm) var(--espaco-md);
+      border: 1px solid var(--cor-borda);
+      border-radius: var(--raio-md);
+      font-family: var(--fonte-principal);
+      font-size: var(--fonte-tamanho-sm);
+      background: var(--cor-fundo);
+    }
+
+    .filtro-dinamico-vazio {
+      padding: var(--espaco-md);
+      border: 1px dashed var(--cor-borda);
+      border-radius: var(--raio-md);
+      color: var(--cor-texto-light);
+      font-size: var(--fonte-tamanho-sm);
+      text-align: center;
+      background: #f8fafc;
+    }
+
+    .btn-adicionar-filtro {
+      margin-top: var(--espaco-sm);
+      width: 100%;
+      padding: var(--espaco-sm) var(--espaco-md);
+      border: 1px dashed var(--cor-primaria);
+      border-radius: var(--raio-md);
+      background: var(--cor-fundo);
+      color: var(--cor-primaria-dark);
+      font-weight: var(--fonte-peso-semibold);
+      cursor: pointer;
+    }
+
+    .btn-remover-filtro {
+      border: none;
+      background: #fff1f2;
+      color: #9f1239;
+      border-radius: var(--raio-md);
+      padding: 8px 10px;
+      cursor: pointer;
+      font-weight: var(--fonte-peso-semibold);
+    }
+
+    .filtros-botoes-sidebar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--espaco-sm);
+      margin-top: var(--espaco-lg);
+    }
+
+    .btn-filtrar,
+    .btn-limpar {
+      border: none;
+      border-radius: var(--raio-md);
+      padding: var(--espaco-sm) var(--espaco-md);
+      font-weight: var(--fonte-peso-semibold);
+      cursor: pointer;
+    }
+
+    .btn-filtrar {
+      background: var(--cor-primaria);
+      color: var(--cor-fundo);
+    }
+
+    .btn-limpar {
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    .tabela-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--espaco-md);
+      flex-wrap: wrap;
+      margin-bottom: var(--espaco-md);
+    }
+
+    .contador-registros {
+      color: var(--cor-texto-light);
+      font-size: var(--fonte-tamanho-sm);
+    }
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: var(--espaco-sm);
+      color: var(--cor-texto);
+      font-size: var(--fonte-tamanho-sm);
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .busca-rapida-linha {
+      display: flex;
+      align-items: center;
+      gap: var(--espaco-sm);
+      width: 100%;
+      max-width: 700px;
+      border-bottom: 2px solid #cbd5e1;
+      padding: 8px 0;
+      transition: border-color var(--transicao-rapida);
+    }
+
+    .busca-rapida-linha:focus-within {
+      border-color: var(--cor-primaria);
+    }
+
+    .busca-rapida-icone {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #dbeafe;
+      color: var(--cor-primaria-dark);
+      flex: 0 0 auto;
+    }
+
+    .busca-rapida-input {
+      width: 100%;
+      border: none !important;
+      outline: none;
+      background: transparent !important;
+      color: var(--cor-fundo-dark);
+      font-family: var(--fonte-principal);
+      font-size: 16px;
+      padding: 4px 0;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+    }
+
+    .busca-rapida-input:focus {
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
+    }
+
+    .busca-rapida-input::placeholder {
+      color: #64748b;
+      opacity: 1;
+    }
+
+    #filtroTamanho {
+      width: 96px;
+      min-width: 96px;
+      padding: 8px 10px;
+    }
+
+    .tabela-container {
+      background: var(--cor-fundo);
+      border-radius: var(--raio-lg);
+      box-shadow: var(--sombra-md);
+      overflow: hidden;
+    }
+
+    .loading-state {
+      display: none;
+      padding: var(--espaco-2xl);
+      text-align: center;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      margin: 0 auto;
+      border: 3px solid #dbeafe;
+      border-top-color: var(--cor-primaria);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+
+    .tabela-wrapper {
+      overflow-x: auto;
+    }
+
+    .tabela {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 840px;
+    }
+
+    .tabela thead {
+      background: linear-gradient(135deg, var(--cor-fundo-dark) 0%, #2d3748 100%);
+      color: var(--cor-fundo);
+    }
+
+    .tabela th,
+    .tabela td {
+      padding: var(--espaco-md);
+      text-align: left;
+      border-bottom: 1px solid var(--cor-borda);
+      font-size: var(--fonte-tamanho-sm);
+      vertical-align: middle;
+    }
+
+    .th-sortable {
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .sort-icon {
+      margin-left: 6px;
+      opacity: 0.35;
+      transition: opacity var(--transicao-rapida);
+    }
+
+    .sort-icon.ativo {
+      opacity: 1;
+    }
+
+    .texto-elipse {
+      display: inline-block;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .nome-cell strong {
+      color: var(--cor-fundo-dark);
+    }
+
+    .status-ativo,
+    .status-inativo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 72px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: var(--fonte-peso-semibold);
+    }
+
+    .status-ativo {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .status-inativo {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .acoes {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .btn-acao {
+      border: none;
+      border-radius: var(--raio-md);
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: var(--fonte-peso-semibold);
+      cursor: pointer;
+      color: var(--cor-fundo);
+      transition: transform var(--transicao-rapida);
+    }
+
+    .btn-acao:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-visualizar { background: #8b5cf6; }
+    .btn-editar { background: #2563eb; }
+    .btn-inativar { background: #f59e0b; }
+    .btn-reativar { background: #10b981; }
+
+    .vazio {
+      padding: var(--espaco-2xl);
+      text-align: center;
+      color: var(--cor-texto-light);
+    }
+
+    .vazio-icon {
+      font-size: 28px;
+      margin-bottom: var(--espaco-sm);
+    }
+
+    .vazio p {
+      margin: 0 0 var(--espaco-md) 0;
+    }
+
+    .vazio a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--espaco-sm) var(--espaco-md);
+      background: var(--cor-primaria);
+      color: var(--cor-fundo);
+      text-decoration: none;
+      border-radius: var(--raio-md);
+      font-weight: var(--fonte-peso-semibold);
+    }
+
+    .paginacao {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: var(--espaco-lg);
+      flex-wrap: wrap;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2300;
+      padding: var(--espaco-md);
+    }
+
+    .modal-overlay.ativo {
+      display: flex;
+    }
+
+    .modal-card {
+      width: min(720px, 100%);
+      background: var(--cor-fundo);
+      border-radius: var(--raio-lg);
+      padding: var(--espaco-lg);
+      box-shadow: var(--sombra-lg);
+    }
+
+    .modal-card h3 {
+      margin: 0 0 var(--espaco-sm) 0;
+      color: var(--cor-fundo-dark);
+    }
+
+    .modal-card p {
+      color: var(--cor-texto-light);
+    }
+
+    .redistribuicao-progresso {
+      margin: var(--espaco-md) 0;
+      color: var(--cor-texto);
+      font-size: var(--fonte-tamanho-sm);
+      font-weight: var(--fonte-peso-semibold);
+    }
+
+    .redistribuicao-lista {
+      display: flex;
+      flex-direction: column;
+      gap: var(--espaco-sm);
+      max-height: 320px;
+      overflow-y: auto;
+      margin-bottom: var(--espaco-md);
+    }
+
+    .redistribuicao-item {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--espaco-sm);
+      align-items: center;
+      padding: var(--espaco-sm);
+      border: 1px solid var(--cor-borda);
+      border-radius: var(--raio-md);
+      background: #f8fafc;
+    }
+
+    .modal-acoes {
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--espaco-sm);
+      border-top: 1px solid var(--cor-borda);
+      padding-top: var(--espaco-md);
+    }
+
+    .modal-btn-secundario,
+    .modal-btn-primario {
+      border: none;
+      border-radius: var(--raio-md);
+      padding: var(--espaco-md) var(--espaco-lg);
+      font-weight: var(--fonte-peso-semibold);
+      cursor: pointer;
+      font-size: var(--fonte-tamanho-sm);
+      transition: all var(--transicao-rapida);
+    }
+
+    .modal-btn-secundario {
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    .modal-btn-secundario:hover {
+      background: #cbd5e1;
+    }
+
+    .modal-btn-primario {
+      background: var(--cor-primaria);
+      color: var(--cor-fundo);
+    }
+
+    .modal-btn-primario:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: var(--sombra-lg);
+    }
+
+    .modal-btn-primario:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 900px) {
+      .navbar-menu {
+        display: none !important;
+      }
+
+      .navbar-hamburger {
+        display: block !important;
+        background: none;
+        border: none;
+        margin-left: auto;
+        cursor: pointer;
+        padding: 6px;
+      }
+
+      .navbar-mobile-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 2000;
+        align-items: flex-start;
+        justify-content: flex-end;
+      }
+
+      .navbar-mobile-overlay.ativo {
+        display: flex !important;
+      }
+
+      .navbar-mobile-menu {
+        background: var(--cor-fundo-dark);
+        color: var(--cor-fundo);
+        width: 220px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        gap: var(--espaco-lg);
+        padding: var(--espaco-xl) var(--espaco-lg) var(--espaco-lg);
+        box-shadow: -2px 0 12px rgba(0, 0, 0, 0.2);
+        position: relative;
+      }
+
+      .navbar-mobile-menu a {
+        color: var(--cor-fundo);
+        font-size: var(--fonte-tamanho-lg);
+        font-weight: var(--fonte-peso-semibold);
+        text-decoration: none;
+        padding: var(--espaco-md) 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .navbar-mobile-close {
+        position: absolute;
+        top: var(--espaco-md);
+        right: var(--espaco-md);
+        background: none;
+        border: none;
+        color: var(--cor-fundo);
+        font-size: 28px;
+        cursor: pointer;
+      }
+
+      .filtros-sidebar {
+        left: -100vw;
+        width: 100vw;
+        max-width: 100vw;
+        border-radius: 0;
+      }
+
+      .membros-header .busca-topo {
+        order: 3;
+        flex-basis: 100%;
+        max-width: 100%;
+        margin: 0;
+      }
+
+      .busca-rapida-linha {
+        max-width: 100%;
+      }
+
+      .filtro-dinamico-item,
+      .redistribuicao-item {
+        grid-template-columns: 1fr;
+      }
+
+      .tabela {
+        min-width: 680px;
+      }
+
+      .acoes {
+        flex-direction: column;
+      }
+
+      .btn-acao {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-content">
+      <a class="navbar-brand" href="/dashboard.html">WAVE</a>
+      <button class="navbar-hamburger" id="btnHamburger" aria-label="Abrir menu" style="display:none">
+        <svg width="28" height="28" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="navbar-menu" id="navbarMenu">
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="/membros.html">Membros</a>
+        <a href="/importacao.html">Importar CSV</a>
+        <a href="/gerenciar-usuarios.html">Administração</a>
+      </div>
+      <div class="navbar-user">
+        <span id="nomeUsuario">Carregando...</span>
+        <button class="btn-logout">Sair</button>
+      </div>
+    </div>
+    <div class="navbar-mobile-overlay" id="navbarMobileOverlay" style="display:none">
+      <div class="navbar-mobile-menu">
+        <button class="navbar-mobile-close" id="btnCloseMobileMenu" aria-label="Fechar menu">✕</button>
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="/membros.html">Membros</a>
+        <a href="/importacao.html">Importar CSV</a>
+        <a href="/gerenciar-usuarios.html">Administração</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="membros-container">
+    <div class="membros-content">
+      <div class="membros-header">
+        <div class="busca-topo">
+          <div class="busca-rapida-linha">
+            <input type="text" id="buscaRapida" class="busca-rapida-input" placeholder="Buscar...">
+            <span class="busca-rapida-icone" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+            </span>
+          </div>
+        </div>
+
+        <a href="/cadastro-membro.html" class="btn-novo">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          Novo Membro
+        </a>
+      </div>
+
+      <div class="overlay-filtros" id="overlayFiltros"></div>
+
+      <div class="filtros-layout">
+        <button class="btn-toggle-filtros" id="btnToggleFiltros">
+          <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          Abrir Filtros
+        </button>
+
+        <div class="filtros-sidebar" id="painelFiltros">
+          <button class="btn-fechar-filtros" id="btnFecharFiltros">✕</button>
+          <div class="filtros-sidebar-titulo">Filtros</div>
+
+          <div class="filtros-secao">
+            <div class="filtros-secao-titulo">Filtro Dinâmico</div>
+            <div id="filtrosDinamicos" class="filtros-dinamicos-lista">
+              <div class="filtro-dinamico-vazio">Nenhum filtro adicionado.</div>
+            </div>
+            <button type="button" class="btn-adicionar-filtro" id="btnAdicionarFiltroDinamico">+ Adicionar condição</button>
+          </div>
+
+          <div class="filtros-botoes-sidebar">
+            <button class="btn-filtrar" id="btnFiltrar">Aplicar</button>
+            <button class="btn-limpar" id="btnLimpar">Limpar filtros</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="tabela-toolbar">
+            <div class="contador-registros" id="contadorRegistros">Carregando membros...</div>
+            <div class="toolbar-right">
+              <label for="filtroTamanho">Por página:</label>
+              <select id="filtroTamanho">
+                <option value="10">10</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="tabela-container">
+            <div class="loading-state" id="carregando">
+              <div class="spinner"></div>
+              <p style="margin-top: var(--espaco-md); color: var(--cor-texto-light);">Carregando membros...</p>
+            </div>
+
+            <div class="tabela-wrapper" id="tabelaWrapper">
+              <table class="tabela">
+                <thead>
+                  <tr>
+                    <th class="th-sortable" data-col="fullName">Nome <span class="sort-icon ativo" id="sort-fullName">↑</span></th>
+                    <th>Telefone</th>
+                    <th class="th-sortable" data-col="leaderId">Discipulado por <span class="sort-icon" id="sort-leaderId">↑</span></th>
+                    <th class="th-sortable" data-col="addressCity">Cidade <span class="sort-icon" id="sort-addressCity">↑</span></th>
+                    <th class="th-sortable" data-col="status">Status <span class="sort-icon" id="sort-status">↑</span></th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="tabelaMembros">
+                  <tr>
+                    <td colspan="6" class="vazio">
+                      <div class="vazio-icon">—</div>
+                      <p>Nenhum membro encontrado</p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="paginacao" id="paginacao"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalConfirmacaoInativacao">
+    <div class="modal-card">
+      <h3>Confirmar inativação</h3>
+      <p id="textoConfirmacaoInativacao">Tem certeza que deseja inativar este membro?</p>
+      <div class="modal-acoes">
+        <button type="button" class="modal-btn-secundario" id="btnCancelarInativacao">Cancelar</button>
+        <button type="button" class="modal-btn-primario" id="btnConfirmarInativacao">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalRedistribuicaoLider">
+    <div class="modal-card">
+      <h3 id="tituloRedistribuicao">Redistribuir membros</h3>
+      <p>Antes de inativar este líder, transfira todos os membros ativos liderados por ele para outros líderes.</p>
+      <div class="redistribuicao-progresso" id="progressoRedistribuicao">0 de 0 redistribuídos</div>
+      <div class="redistribuicao-lista" id="listaRedistribuicao"></div>
+      <div class="modal-acoes">
+        <button type="button" class="modal-btn-secundario" id="btnCancelarRedistribuicao">Cancelar</button>
+        <button type="button" class="modal-btn-primario" id="btnConfirmarRedistribuicao" disabled>Confirmar redistribuição e inativar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalReativacao">
+    <div class="modal-card" style="max-width: 520px;">
+      <h3>Reativar Membro</h3>
+      <p id="textoReativacao"></p>
+      <select id="liderSelectReativacao" style="display:none; margin-bottom: var(--espaco-md);">
+        <option value="">Selecione um líder</option>
+      </select>
+      <div class="modal-acoes">
+        <button type="button" class="modal-btn-secundario" id="btnCancelarReativacao">Cancelar</button>
+        <button type="button" class="modal-btn-primario" id="btnConfirmarReativacao">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/utils.js"></script>
+  <script>
+    ModoVisual.ativar();
+    if (!UsuarioManager.obterUsuario()) {
+      UsuarioManager.salvarUsuario({ id: '00000000-0000-0000-0000-000000000001', fullName: 'Administrador Demo', email: 'admin@wave.local', role: 'Admin' });
+      TokenManager.salvarToken('token-demo', 480);
+    }
+
+    if (!protegerRota()) throw new Error('Não autenticado');
+
+    const btnHamburger = document.getElementById('btnHamburger');
+    const navbarMobileOverlay = document.getElementById('navbarMobileOverlay');
+    const btnCloseMobileMenu = document.getElementById('btnCloseMobileMenu');
+
+    const filtroTamanho = DOM.obter('#filtroTamanho');
+    const carregando = DOM.obter('#carregando');
+    const tabelaWrapper = DOM.obter('#tabelaWrapper');
+    const tabelaMembros = DOM.obter('#tabelaMembros');
+    const paginacaoContainer = DOM.obter('#paginacao');
+    const contadorRegistros = DOM.obter('#contadorRegistros');
+    const filtrosDinamicosEl = DOM.obter('#filtrosDinamicos');
+    const btnAdicionarFiltro = DOM.obter('#btnAdicionarFiltroDinamico');
+    const btnFiltrar = DOM.obter('#btnFiltrar');
+    const btnLimpar = DOM.obter('#btnLimpar');
+    const btnToggleFiltros = DOM.obter('#btnToggleFiltros');
+    const btnFecharFiltros = DOM.obter('#btnFecharFiltros');
+    const painelFiltros = DOM.obter('#painelFiltros');
+    const overlayFiltros = DOM.obter('#overlayFiltros');
+
+    const modalConfirmacaoInativacao = DOM.obter('#modalConfirmacaoInativacao');
+    const textoConfirmacaoInativacao = DOM.obter('#textoConfirmacaoInativacao');
+    const btnCancelarInativacao = DOM.obter('#btnCancelarInativacao');
+    const btnConfirmarInativacao = DOM.obter('#btnConfirmarInativacao');
+    const modalRedistribuicaoLider = DOM.obter('#modalRedistribuicaoLider');
+    const tituloRedistribuicao = DOM.obter('#tituloRedistribuicao');
+    const progressoRedistribuicao = DOM.obter('#progressoRedistribuicao');
+    const listaRedistribuicao = DOM.obter('#listaRedistribuicao');
+    const btnCancelarRedistribuicao = DOM.obter('#btnCancelarRedistribuicao');
+    const btnConfirmarRedistribuicao = DOM.obter('#btnConfirmarRedistribuicao');
+    const modalReativacao = DOM.obter('#modalReativacao');
+    const textoReativacao = DOM.obter('#textoReativacao');
+    const liderSelectReativacao = DOM.obter('#liderSelectReativacao');
+    const btnCancelarReativacao = DOM.obter('#btnCancelarReativacao');
+    const btnConfirmarReativacao = DOM.obter('#btnConfirmarReativacao');
+
+    let paginaAtual = 1;
+    let tamanho = 50;
+    let ordenacaoColuna = 'fullName';
+    let ordenacaoDirecao = 'asc';
+    let todosMembros = [];
+    let membrosFiltrados = [];
+    let membroPendenteInativacao = null;
+    let contextoRedistribuicao = null;
+    let contextoReativacao = null;
+    let contadorFiltroDinamico = 0;
+
+    const filtrosDinamicos = [];
+    const lideresMap = new Map();
+    const celulasPorLider = new Map();
+
+    const DIAS_SEMANA = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+    const CAMPOS_DINAMICOS = {
+      fullName:            { label: 'Nome', tipo: 'texto', condicoes: ['contem', 'comeca', 'igual'] },
+      phone:               { label: 'Telefone', tipo: 'texto', condicoes: ['contem', 'igual'] },
+      leaderId:            { label: 'Discipulado por', tipo: 'lider', condicoes: ['igual'] },
+      addressCity:         { label: 'Cidade', tipo: 'texto', condicoes: ['contem', 'igual'] },
+      addressNeighborhood: { label: 'Bairro', tipo: 'texto', condicoes: ['contem', 'igual'] },
+      cellDay:             { label: 'Dia da célula', tipo: 'diacelula', condicoes: ['igual'] },
+      cellTime:            { label: 'Horário da célula', tipo: 'hora', condicoes: ['igual', 'depois', 'antes'] },
+      joinType:            { label: 'Tipo de ingresso', tipo: 'enum', condicoes: ['igual'], opcoes: ['Batismo', 'Recepção'] },
+      joinDate:            { label: 'Data de ingresso', tipo: 'data', condicoes: ['igual', 'depois', 'antes'] },
+      birthDate:           { label: 'Data de nascimento', tipo: 'data', condicoes: ['igual', 'depois', 'antes'] },
+      status:              { label: 'Status', tipo: 'status', condicoes: ['igual'], opcoes: ['Ativo', 'Inativo', 'Todos'] }
+    };
+    const LABELS_CONDICOES = {
+      contem: 'contém',
+      comeca: 'começa com',
+      igual: 'é igual a',
+      antes: 'é antes de',
+      depois: 'é depois de'
+    };
+
+    function abrirMenuMobile() {
+      navbarMobileOverlay.classList.add('ativo');
+      navbarMobileOverlay.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function fecharMenuMobile() {
+      navbarMobileOverlay.classList.remove('ativo');
+      navbarMobileOverlay.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    function toggleHamburger() {
+      if (window.innerWidth <= 900) {
+        btnHamburger.style.display = 'block';
+      } else {
+        btnHamburger.style.display = 'none';
+        fecharMenuMobile();
+      }
+    }
+
+    btnHamburger.addEventListener('click', abrirMenuMobile);
+    btnCloseMobileMenu.addEventListener('click', fecharMenuMobile);
+    navbarMobileOverlay.addEventListener('click', (event) => {
+      if (event.target === navbarMobileOverlay) fecharMenuMobile();
+    });
+    window.addEventListener('resize', toggleHamburger);
+    toggleHamburger();
+
+    function abrirFiltros() {
+      painelFiltros.classList.add('aberto');
+      overlayFiltros.classList.add('ativo');
+    }
+
+    function fecharFiltros() {
+      painelFiltros.classList.remove('aberto');
+      overlayFiltros.classList.remove('ativo');
+    }
+
+    btnToggleFiltros.addEventListener('click', () => {
+      if (painelFiltros.classList.contains('aberto')) {
+        fecharFiltros();
+      } else {
+        abrirFiltros();
+      }
+    });
+    btnFecharFiltros.addEventListener('click', fecharFiltros);
+    overlayFiltros.addEventListener('click', fecharFiltros);
+
+    function mostrarCarregando() {
+      carregando.style.display = 'block';
+      tabelaWrapper.style.display = 'none';
+    }
+
+    function mostrarTabela() {
+      carregando.style.display = 'none';
+      tabelaWrapper.style.display = 'block';
+    }
+
+    function normalizarTexto(valor) {
+      return (valor || '')
+        .toString()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function membroCombinaBuscaRapida(membro, termo) {
+      const campos = [
+        membro.fullName,
+        membro.email,
+        membro.phone,
+        membro.addressCity,
+        membro.addressNeighborhood,
+        membro.addressStreet,
+        membro.addressNumber,
+        membro.addressComplement,
+        membro.joinType,
+        membro.birthDate,
+        membro.joinDate,
+        obterNomeLider(membro),
+        membro.cell?.name,
+        membro.cell?.leader?.fullName,
+        membro.category,
+        membro.isActive ? 'ativo' : 'inativo'
+      ];
+
+      return campos.some(campo => normalizarTexto(campo).includes(termo));
+    }
+
+    function formatarTelefone(telefone) {
+      if (!telefone) return '—';
+      const digitos = telefone.replace(/\D/g, '');
+      if (digitos.length === 11) return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 7)}-${digitos.slice(7)}`;
+      if (digitos.length === 10) return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 6)}-${digitos.slice(6)}`;
+      return telefone;
+    }
+
+    function obterNomeLider(membro) {
+      return membro.leader?.fullName || lideresMap.get(membro.leaderId)?.fullName || '—';
+    }
+
+    function abrirModal(modal) {
+      modal.classList.add('ativo');
+    }
+
+    function fecharModal(modal) {
+      modal.classList.remove('ativo');
+    }
+
+    function montarOperadores(regra, operadorSelect) {
+      const cfg = CAMPOS_DINAMICOS[regra.campo];
+      operadorSelect.innerHTML = cfg.condicoes
+        .map(condicao => `<option value="${condicao}" ${condicao === regra.operador ? 'selected' : ''}>${LABELS_CONDICOES[condicao]}</option>`)
+        .join('');
+      if (!cfg.condicoes.includes(regra.operador)) {
+        regra.operador = cfg.condicoes[0];
+        operadorSelect.value = regra.operador;
+      }
+    }
+
+    function montarCampoValor(regra, valorWrap) {
+      DOM.limpar(valorWrap);
+      const cfg = CAMPOS_DINAMICOS[regra.campo];
+
+      if (cfg.tipo === 'status' || cfg.tipo === 'enum') {
+        const select = DOM.criar('select');
+        select.innerHTML = `<option value="">Selecione</option>${cfg.opcoes.map(opcao => `<option value="${opcao}" ${opcao === regra.valor ? 'selected' : ''}>${opcao}</option>`).join('')}`;
+        select.addEventListener('change', () => { regra.valor = select.value; });
+        valorWrap.appendChild(select);
+        return;
+      }
+
+      if (cfg.tipo === 'lider') {
+        const select = DOM.criar('select');
+        select.innerHTML = `<option value="">Selecione</option>${Array.from(lideresMap.values()).map(lider => `<option value="${lider.id}" ${lider.id === regra.valor ? 'selected' : ''}>${lider.fullName}</option>`).join('')}`;
+        select.addEventListener('change', () => { regra.valor = select.value; });
+        valorWrap.appendChild(select);
+        return;
+      }
+
+      if (cfg.tipo === 'diacelula') {
+        const select = DOM.criar('select');
+        select.innerHTML = `<option value="">Selecione</option>${DIAS_SEMANA.map(dia => `<option value="${dia}" ${dia === regra.valor ? 'selected' : ''}>${dia}</option>`).join('')}`;
+        select.addEventListener('change', () => { regra.valor = select.value; });
+        valorWrap.appendChild(select);
+        return;
+      }
+
+      if (cfg.tipo === 'hora') {
+        const input = DOM.criar('input', { type: 'time', value: regra.valor || '' });
+        input.addEventListener('change', () => { regra.valor = input.value; });
+        valorWrap.appendChild(input);
+        return;
+      }
+
+      if (cfg.tipo === 'data') {
+        const input = DOM.criar('input', { type: 'date', value: regra.valor || '' });
+        input.addEventListener('change', () => { regra.valor = input.value; });
+        valorWrap.appendChild(input);
+        return;
+      }
+
+      const input = DOM.criar('input', { type: 'text', value: regra.valor || '', placeholder: 'Valor...' });
+      input.addEventListener('input', () => { regra.valor = input.value; });
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          aplicarFiltros();
+        }
+      });
+      valorWrap.appendChild(input);
+    }
+
+    function renderizarFiltrosDinamicos() {
+      DOM.limpar(filtrosDinamicosEl);
+
+      if (!filtrosDinamicos.length) {
+        filtrosDinamicosEl.innerHTML = '<div class="filtro-dinamico-vazio">Nenhum filtro adicionado.</div>';
+        return;
+      }
+
+      filtrosDinamicos.forEach(regra => {
+        const linha = DOM.criar('div', { className: 'filtro-dinamico-item' });
+        const campoSelect = DOM.criar('select');
+        const operadorSelect = DOM.criar('select');
+        const valorWrap = DOM.criar('div');
+        const btnRemover = DOM.criar('button', { type: 'button', className: 'btn-remover-filtro' }, '✕');
+
+        valorWrap.style.width = '100%';
+        campoSelect.innerHTML = Object.entries(CAMPOS_DINAMICOS)
+          .map(([valor, meta]) => `<option value="${valor}" ${valor === regra.campo ? 'selected' : ''}>${meta.label}</option>`)
+          .join('');
+
+        campoSelect.addEventListener('change', () => {
+          regra.campo = campoSelect.value;
+          regra.operador = CAMPOS_DINAMICOS[regra.campo].condicoes[0];
+          regra.valor = '';
+          montarOperadores(regra, operadorSelect);
+          montarCampoValor(regra, valorWrap);
+        });
+
+        operadorSelect.addEventListener('change', () => {
+          regra.operador = operadorSelect.value;
+        });
+
+        btnRemover.addEventListener('click', () => {
+          const indice = filtrosDinamicos.findIndex(item => item.id === regra.id);
+          if (indice >= 0) filtrosDinamicos.splice(indice, 1);
+          renderizarFiltrosDinamicos();
+        });
+
+        montarOperadores(regra, operadorSelect);
+        montarCampoValor(regra, valorWrap);
+
+        linha.appendChild(campoSelect);
+        linha.appendChild(operadorSelect);
+        linha.appendChild(valorWrap);
+        linha.appendChild(btnRemover);
+        filtrosDinamicosEl.appendChild(linha);
+      });
+    }
+
+    function adicionarFiltroDinamico() {
+      contadorFiltroDinamico += 1;
+      const campoInicial = 'fullName';
+      filtrosDinamicos.push({
+        id: `fd-${contadorFiltroDinamico}`,
+        campo: campoInicial,
+        operador: CAMPOS_DINAMICOS[campoInicial].condicoes[0],
+        valor: ''
+      });
+      renderizarFiltrosDinamicos();
+    }
+
+    function compararRegra(membro, regra) {
+      const cfg = CAMPOS_DINAMICOS[regra.campo];
+      const valorFiltro = regra.valor;
+
+      if (!cfg || valorFiltro === '') return true;
+
+      if (cfg.tipo === 'status') {
+        if (valorFiltro === 'Todos') return true;
+        if (valorFiltro === 'Ativo') return membro.isActive === true;
+        if (valorFiltro === 'Inativo') return membro.isActive === false;
+        return true;
+      }
+
+      if (cfg.tipo === 'lider') {
+        return (membro.leaderId || '') === valorFiltro;
+      }
+
+      if (cfg.tipo === 'diacelula') {
+        if (!membro.isCellLeader) return false;
+        const diaSelecionado = DIAS_SEMANA.indexOf(valorFiltro);
+        const celulas = celulasPorLider.get(membro.id) || [];
+        return diaSelecionado >= 0 && celulas.some(celula => celula.meetingDay === diaSelecionado);
+      }
+
+      if (cfg.tipo === 'hora') {
+        if (!membro.isCellLeader) return false;
+        const horarioFiltro = valorFiltro.slice(0, 5);
+        const celulas = celulasPorLider.get(membro.id) || [];
+        return celulas.some(celula => {
+          const horarioCelula = (celula.meetingTime || '').slice(0, 5);
+          if (regra.operador === 'igual') return horarioCelula === horarioFiltro;
+          if (regra.operador === 'antes') return horarioCelula < horarioFiltro;
+          return horarioCelula > horarioFiltro;
+        });
+      }
+
+      if (cfg.tipo === 'data') {
+        const valorMembro = (membro[regra.campo] || '').slice(0, 10);
+        const valorDataFiltro = valorFiltro.slice(0, 10);
+        if (!valorMembro || !valorDataFiltro) return false;
+        if (regra.operador === 'igual') return valorMembro === valorDataFiltro;
+        if (regra.operador === 'antes') return valorMembro < valorDataFiltro;
+        return valorMembro > valorDataFiltro;
+      }
+
+      const valorMembro = normalizarTexto(membro[regra.campo] || '');
+      const valorTextoFiltro = normalizarTexto(valorFiltro);
+      if (regra.operador === 'igual') return valorMembro === valorTextoFiltro;
+      if (regra.operador === 'comeca') return valorMembro.startsWith(valorTextoFiltro);
+      return valorMembro.includes(valorTextoFiltro);
+    }
+
+    function aplicarFiltrosLista(lista) {
+      const regrasAtivas = filtrosDinamicos.filter(regra => regra.campo && regra.operador && regra.valor !== '');
+      if (!regrasAtivas.length) return lista;
+      return lista.filter(membro => regrasAtivas.every(regra => compararRegra(membro, regra)));
+    }
+
+    function aplicarOrdenacao(lista) {
+      return [...lista].sort((a, b) => {
+        let valorA = '';
+        let valorB = '';
+
+        if (ordenacaoColuna === 'leaderId') {
+          valorA = normalizarTexto(obterNomeLider(a));
+          valorB = normalizarTexto(obterNomeLider(b));
+        } else if (ordenacaoColuna === 'status') {
+          valorA = a.isActive ? 'ativo' : 'inativo';
+          valorB = b.isActive ? 'ativo' : 'inativo';
+        } else {
+          valorA = normalizarTexto(a[ordenacaoColuna] || '');
+          valorB = normalizarTexto(b[ordenacaoColuna] || '');
+        }
+
+        if (valorA < valorB) return ordenacaoDirecao === 'asc' ? -1 : 1;
+        if (valorA > valorB) return ordenacaoDirecao === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    function atualizarIndicadoresOrdenacao() {
+      document.querySelectorAll('.sort-icon').forEach(icone => {
+        icone.classList.remove('ativo');
+        icone.textContent = '↑';
+      });
+
+      const iconeAtual = document.getElementById(`sort-${ordenacaoColuna}`);
+      if (iconeAtual) {
+        iconeAtual.classList.add('ativo');
+        iconeAtual.textContent = ordenacaoDirecao === 'asc' ? '↑' : '↓';
+      }
+    }
+
+    function renderizarTabelaPaginada() {
+      DOM.limpar(tabelaMembros);
+
+      const listaOrdenada = aplicarOrdenacao(membrosFiltrados);
+      const totalItems = listaOrdenada.length;
+      const totalPages = Math.max(1, Math.ceil(totalItems / tamanho));
+      paginaAtual = Math.min(Math.max(1, paginaAtual), totalPages);
+      const inicio = (paginaAtual - 1) * tamanho;
+      const paginaItens = listaOrdenada.slice(inicio, inicio + tamanho);
+
+      if (!paginaItens.length) {
+        const existeFiltroAplicado = filtrosDinamicos.some(regra => {
+          if (!regra.campo || regra.valor === '') return false;
+          return !(regra.campo === 'status' && regra.operador === 'igual' && regra.valor === 'Ativo');
+        });
+        const mensagem = existeFiltroAplicado
+          ? 'Nenhum resultado encontrado para os filtros aplicados.'
+          : 'Nenhum membro ativo encontrado. Cadastre o primeiro membro.';
+        const acao = existeFiltroAplicado ? '' : '<a href="/cadastro-membro.html">Cadastrar primeiro membro</a>';
+
+        tabelaMembros.innerHTML = `
+          <tr>
+            <td colspan="6" class="vazio">
+              <div class="vazio-icon">—</div>
+              <p>${mensagem}</p>
+              ${acao}
+            </td>
+          </tr>
+        `;
+      } else {
+        paginaItens.forEach(membro => {
+          const badgeStatus = membro.isActive
+            ? '<span class="status-ativo">Ativo</span>'
+            : '<span class="status-inativo">Inativo</span>';
+          const acoes = `
+            <button class="btn-acao btn-visualizar" onclick="visualizarMembro('${membro.id}')">Visualizar</button>
+            <button class="btn-acao btn-editar" onclick="editarMembro('${membro.id}')">Editar</button>
+            ${membro.isActive
+              ? `<button class="btn-acao btn-inativar" onclick="prepararInativacao('${membro.id}')">Inativar</button>`
+              : `<button class="btn-acao btn-reativar" onclick="prepararReativacao('${membro.id}')">Reativar</button>`}
+          `;
+
+          const row = DOM.criar('tr', {}, `
+            <td class="nome-cell" title="${membro.fullName || ''}"><strong class="texto-elipse">${membro.fullName || '—'}</strong></td>
+            <td title="${membro.phone || ''}"><span class="texto-elipse">${formatarTelefone(membro.phone)}</span></td>
+            <td title="${obterNomeLider(membro)}"><span class="texto-elipse">${obterNomeLider(membro)}</span></td>
+            <td title="${membro.addressCity || ''}"><span class="texto-elipse">${membro.addressCity || '—'}</span></td>
+            <td>${badgeStatus}</td>
+            <td><div class="acoes">${acoes}</div></td>
+          `);
+
+          tabelaMembros.appendChild(row);
+        });
+      }
+
+      mostrarTabela();
+      contadorRegistros.textContent = totalItems > 0
+        ? `Página ${paginaAtual} de ${totalPages} · ${totalItems} registro${totalItems !== 1 ? 's' : ''} encontrado${totalItems !== 1 ? 's' : ''}`
+        : '0 registros encontrados';
+
+      if (totalPages > 1) {
+        Paginacao.renderizar(paginaAtual, totalPages, (novaPagina) => {
+          paginaAtual = novaPagina;
+          renderizarTabelaPaginada();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      } else {
+        DOM.limpar(paginacaoContainer);
+      }
+    }
+
+    async function carregarDados() {
+      try {
+        mostrarCarregando();
+
+        const [membrosResp, lideresResp, celulasResp] = await Promise.all([
+          MembrosApi.listar(1, 1000, {}),
+          LideresApi.listar(1, 500),
+          CelulasApi.listar(1, 1000)
+        ]);
+
+        todosMembros = membrosResp.items || [];
+        lideresMap.clear();
+        celulasPorLider.clear();
+
+        (lideresResp.items || []).forEach(lider => {
+          lideresMap.set(lider.id, lider);
+        });
+
+        todosMembros
+          .filter(membro => membro.isActive && membro.isCellLeader)
+          .forEach(membro => {
+            lideresMap.set(membro.id, { id: membro.id, fullName: membro.fullName });
+          });
+
+        (celulasResp.items || []).forEach(celula => {
+          const liderId = celula.leaderId || celula.leader?.id;
+          if (!liderId) return;
+          if (!celulasPorLider.has(liderId)) celulasPorLider.set(liderId, []);
+          celulasPorLider.get(liderId).push(celula);
+        });
+
+        membrosFiltrados = aplicarFiltrosLista(todosMembros);
+        renderizarFiltrosDinamicos();
+        renderizarTabelaPaginada();
+      } catch (erro) {
+        console.error('Erro ao carregar membros:', erro);
+        carregando.style.display = 'none';
+        tabelaWrapper.style.display = 'block';
+        tabelaMembros.innerHTML = `
+          <tr>
+            <td colspan="6" class="vazio">
+              <div class="vazio-icon">—</div>
+              <p>Não foi possível carregar a listagem. Tente novamente.</p>
+            </td>
+          </tr>
+        `;
+        contadorRegistros.textContent = 'Falha ao carregar membros';
+      }
+    }
+
+    function aplicarFiltros() {
+      tamanho = parseInt(filtroTamanho.value, 10) || 50;
+      paginaAtual = 1;
+      membrosFiltrados = aplicarFiltrosLista(todosMembros);
+      renderizarTabelaPaginada();
+      fecharFiltros();
+    }
+
+    function resetarFiltroPadraoStatus() {
+      filtrosDinamicos.length = 0;
+      contadorFiltroDinamico += 1;
+      filtrosDinamicos.push({
+        id: `fd-${contadorFiltroDinamico}`,
+        campo: 'status',
+        operador: 'igual',
+        valor: 'Ativo'
+      });
+      renderizarFiltrosDinamicos();
+    }
+
+    function atualizarProgressoRedistribuicao() {
+      if (!contextoRedistribuicao) return;
+      const total = contextoRedistribuicao.membrosVinculados.length;
+      const preenchidos = contextoRedistribuicao.membrosVinculados.filter(membro => contextoRedistribuicao.novosLideres[membro.id]).length;
+      progressoRedistribuicao.textContent = `${preenchidos} de ${total} redistribuídos`;
+      btnConfirmarRedistribuicao.disabled = preenchidos !== total;
+    }
+
+    function renderizarModalRedistribuicao() {
+      if (!contextoRedistribuicao) return;
+
+      tituloRedistribuicao.textContent = `Redistribuir membros de ${contextoRedistribuicao.lider.fullName}`;
+      DOM.limpar(listaRedistribuicao);
+
+      contextoRedistribuicao.membrosVinculados.forEach(membro => {
+        const item = DOM.criar('div', { className: 'redistribuicao-item' });
+        const info = DOM.criar('div', {}, `
+          <strong>${membro.fullName}</strong>
+          <div style="font-size:12px;color:#64748b;">Líder atual: ${contextoRedistribuicao.lider.fullName}</div>
+        `);
+        const seletor = DOM.criar('select');
+        seletor.innerHTML = '<option value="">Selecione novo líder</option>' +
+          contextoRedistribuicao.lideresAlternativos.map(lider => `<option value="${lider.id}">${lider.fullName}</option>`).join('');
+        seletor.value = contextoRedistribuicao.novosLideres[membro.id] || '';
+        seletor.addEventListener('change', () => {
+          contextoRedistribuicao.novosLideres[membro.id] = seletor.value;
+          atualizarProgressoRedistribuicao();
+        });
+        item.appendChild(info);
+        item.appendChild(seletor);
+        listaRedistribuicao.appendChild(item);
+      });
+
+      atualizarProgressoRedistribuicao();
+      abrirModal(modalRedistribuicaoLider);
+    }
+
+    async function prepararInativacao(id) {
+      try {
+        const membro = todosMembros.find(item => item.id === id);
+        if (!membro || !membro.isActive) {
+          Notificacao.aviso('Membro já está inativo.');
+          return;
+        }
+
+        const membrosVinculados = todosMembros.filter(item => item.isActive && item.leaderId === membro.id);
+        if (!membrosVinculados.length) {
+          membroPendenteInativacao = membro;
+          textoConfirmacaoInativacao.textContent = `Tem certeza que deseja inativar ${membro.fullName}? Esta ação pode ser desfeita a qualquer momento.`;
+          abrirModal(modalConfirmacaoInativacao);
+          return;
+        }
+
+        const lideresAlternativos = Array.from(lideresMap.values()).filter(lider => lider.id !== membro.id);
+        if (!lideresAlternativos.length) {
+          Notificacao.erro('Não há outras células ativas disponíveis para redistribuição. Cadastre outro líder antes de inativar este.');
+          return;
+        }
+
+        contextoRedistribuicao = {
+          lider: membro,
+          membrosVinculados,
+          lideresAlternativos,
+          novosLideres: {}
+        };
+        renderizarModalRedistribuicao();
+      } catch (erro) {
+        console.error('Falha ao preparar inativação', erro);
+        Notificacao.erro('Não foi possível preparar a inativação deste membro.');
+      }
+    }
+
+    async function confirmarInativacaoSimples() {
+      if (!membroPendenteInativacao) return;
+
+      try {
+        await MembrosApi.inativar(membroPendenteInativacao.id);
+        fecharModal(modalConfirmacaoInativacao);
+        membroPendenteInativacao = null;
+        Notificacao.sucesso('Membro inativado com sucesso.');
+        await carregarDados();
+      } catch (erro) {
+        console.error('Erro ao inativar membro', erro);
+        Notificacao.erro('Falha ao inativar membro.');
+      }
+    }
+
+    async function confirmarRedistribuicaoEInativacao() {
+      if (!contextoRedistribuicao) return;
+
+      const total = contextoRedistribuicao.membrosVinculados.length;
+      const preenchidos = contextoRedistribuicao.membrosVinculados.filter(membro => contextoRedistribuicao.novosLideres[membro.id]).length;
+      if (preenchidos !== total) return;
+
+      let snapshot = null;
+      if (ModoVisual.ativo()) snapshot = ModoVisual.membros().map(membro => ({ ...membro }));
+
+      try {
+        for (const membro of contextoRedistribuicao.membrosVinculados) {
+          const novoLiderId = contextoRedistribuicao.novosLideres[membro.id];
+          const novoLider = lideresMap.get(novoLiderId) || todosMembros.find(item => item.id === novoLiderId);
+          const celulaDestino = (celulasPorLider.get(novoLiderId) || [])[0] || null;
+
+          await MembrosApi.atualizar(membro.id, {
+            leaderId: novoLiderId,
+            leader: novoLider ? { id: novoLiderId, fullName: novoLider.fullName } : membro.leader,
+            cellId: celulaDestino?.id || membro.cellId,
+            cell: celulaDestino ? { id: celulaDestino.id, name: celulaDestino.name } : membro.cell
+          });
+        }
+
+        await MembrosApi.inativar(contextoRedistribuicao.lider.id);
+        fecharModal(modalRedistribuicaoLider);
+        contextoRedistribuicao = null;
+        Notificacao.sucesso('Membro inativado com sucesso.');
+        await carregarDados();
+      } catch (erro) {
+        if (snapshot) ModoVisual.salvarMembros(snapshot);
+        console.error('Erro ao redistribuir e inativar', erro);
+        Notificacao.erro('Falha ao redistribuir membros. Nenhuma alteração foi mantida.');
+      }
+    }
+
+    async function prepararReativacao(id) {
+      try {
+        const membro = todosMembros.find(item => item.id === id);
+        if (!membro || membro.isActive) {
+          Notificacao.aviso('Membro já está ativo.');
+          return;
+        }
+
+        const liderAnteriorValido = membro.leaderId && lideresMap.has(membro.leaderId);
+        contextoReativacao = { membro, novoLiderId: liderAnteriorValido ? membro.leaderId : null };
+
+        if (liderAnteriorValido) {
+          const nomeLider = obterNomeLider(membro);
+          textoReativacao.innerHTML = `Deseja reativar <strong>${membro.fullName}</strong>? Ele voltará a ser vinculado ao líder <strong>${nomeLider}</strong>.`;
+          liderSelectReativacao.style.display = 'none';
+          btnConfirmarReativacao.disabled = false;
+        } else {
+          textoReativacao.innerHTML = `O líder anterior de <strong>${membro.fullName}</strong> não está mais disponível. Selecione um novo líder para concluir a reativação.`;
+          liderSelectReativacao.innerHTML = '<option value="">Selecione um líder</option>' +
+            Array.from(lideresMap.values()).map(lider => `<option value="${lider.id}">${lider.fullName}</option>`).join('');
+          liderSelectReativacao.value = '';
+          liderSelectReativacao.style.display = 'block';
+          btnConfirmarReativacao.disabled = true;
+        }
+
+        abrirModal(modalReativacao);
+      } catch (erro) {
+        console.error('Erro ao preparar reativação', erro);
+        Notificacao.erro('Não foi possível preparar a reativação deste membro.');
+      }
+    }
+
+    async function confirmarReativacao() {
+      if (!contextoReativacao) return;
+
+      const { membro, novoLiderId } = contextoReativacao;
+      try {
+        if (novoLiderId && novoLiderId !== membro.leaderId) {
+          const novoLider = lideresMap.get(novoLiderId);
+          await MembrosApi.atualizar(membro.id, {
+            leaderId: novoLiderId,
+            leader: novoLider ? { id: novoLiderId, fullName: novoLider.fullName } : undefined
+          });
+        }
+
+        await MembrosApi.reativar(membro.id);
+        fecharModal(modalReativacao);
+        contextoReativacao = null;
+        Notificacao.sucesso('Membro reativado com sucesso.');
+        await carregarDados();
+      } catch (erro) {
+        console.error('Erro ao reativar membro', erro);
+        Notificacao.erro('Falha ao reativar membro.');
+      }
+    }
+
+    function visualizarMembro(id) {
+      window.location.href = resolverRotaLocal(`/visualizar-membro.html?id=${id}`);
+    }
+
+    function editarMembro(id) {
+      window.location.href = resolverRotaLocal(`/cadastro-membro.html?id=${id}`);
+    }
+
+    document.querySelectorAll('.th-sortable').forEach(coluna => {
+      coluna.addEventListener('click', () => {
+        const col = coluna.dataset.col;
+        if (ordenacaoColuna === col) {
+          ordenacaoDirecao = ordenacaoDirecao === 'asc' ? 'desc' : 'asc';
+        } else {
+          ordenacaoColuna = col;
+          ordenacaoDirecao = 'asc';
+        }
+        paginaAtual = 1;
+        atualizarIndicadoresOrdenacao();
+        renderizarTabelaPaginada();
+      });
+    });
+
+    btnAdicionarFiltro.addEventListener('click', adicionarFiltroDinamico);
+    btnFiltrar.addEventListener('click', aplicarFiltros);
+    btnLimpar.addEventListener('click', () => {
+      resetarFiltroPadraoStatus();
+      paginaAtual = 1;
+      membrosFiltrados = aplicarFiltrosLista(todosMembros);
+      renderizarTabelaPaginada();
+    });
+
+    filtroTamanho.addEventListener('change', () => {
+      tamanho = parseInt(filtroTamanho.value, 10) || 50;
+      paginaAtual = 1;
+      renderizarTabelaPaginada();
+    });
+
+    const buscaRapida = DOM.obter('#buscaRapida');
+    if (buscaRapida) {
+      buscaRapida.addEventListener('input', () => {
+        const termo = normalizarTexto(buscaRapida.value);
+        paginaAtual = 1;
+        
+        if (!termo) {
+          membrosFiltrados = aplicarFiltrosLista(todosMembros);
+        } else {
+          const filtrados = aplicarFiltrosLista(todosMembros);
+          membrosFiltrados = filtrados.filter(membro => membroCombinaBuscaRapida(membro, termo));
+        }
+        
+        renderizarTabelaPaginada();
+      });
+      
+      buscaRapida.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+        }
+      });
+    }
+
+    painelFiltros.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        aplicarFiltros();
+      }
+    });
+
+    liderSelectReativacao.addEventListener('change', () => {
+      if (!contextoReativacao) return;
+      contextoReativacao.novoLiderId = liderSelectReativacao.value || null;
+      btnConfirmarReativacao.disabled = !contextoReativacao.novoLiderId;
+    });
+
+    btnCancelarInativacao.addEventListener('click', () => {
+      membroPendenteInativacao = null;
+      fecharModal(modalConfirmacaoInativacao);
+    });
+    btnConfirmarInativacao.addEventListener('click', confirmarInativacaoSimples);
+    btnCancelarRedistribuicao.addEventListener('click', () => {
+      contextoRedistribuicao = null;
+      fecharModal(modalRedistribuicaoLider);
+    });
+    btnConfirmarRedistribuicao.addEventListener('click', confirmarRedistribuicaoEInativacao);
+    btnCancelarReativacao.addEventListener('click', () => {
+      contextoReativacao = null;
+      fecharModal(modalReativacao);
+    });
+    btnConfirmarReativacao.addEventListener('click', confirmarReativacao);
+
+    modalConfirmacaoInativacao.addEventListener('click', (event) => {
+      if (event.target === modalConfirmacaoInativacao) {
+        membroPendenteInativacao = null;
+        fecharModal(modalConfirmacaoInativacao);
+      }
+    });
+    modalRedistribuicaoLider.addEventListener('click', (event) => {
+      if (event.target === modalRedistribuicaoLider) {
+        contextoRedistribuicao = null;
+        fecharModal(modalRedistribuicaoLider);
+      }
+    });
+    modalReativacao.addEventListener('click', (event) => {
+      if (event.target === modalReativacao) {
+        contextoReativacao = null;
+        fecharModal(modalReativacao);
+      }
+    });
+
+    window.visualizarMembro = visualizarMembro;
+    window.editarMembro = editarMembro;
+    window.prepararInativacao = prepararInativacao;
+    window.prepararReativacao = prepararReativacao;
+
+    atualizarIndicadoresOrdenacao();
+    resetarFiltroPadraoStatus();
+    carregarDados();
+  </script>
+</body>
+</html>

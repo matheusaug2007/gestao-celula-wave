@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Células - Cadastro de Membros</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" type="image/png" href="imagens/IMG_2261.PNG">
+  <style>
+    .celulas-container {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    }
+
+    .celulas-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--espaco-xl) var(--espaco-md);
+    }
+
+    .celulas-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--espaco-xl);
+      flex-wrap: wrap;
+      gap: var(--espaco-md);
+    }
+
+    .celulas-header h1 {
+      font-size: var(--fonte-tamanho-xl);
+      color: var(--cor-fundo-dark);
+    }
+
+    .btn-nova {
+      background: linear-gradient(135deg, var(--cor-primaria) 0%, var(--cor-primaria-dark) 100%);
+      color: var(--cor-fundo);
+      padding: var(--espaco-sm) var(--espaco-lg);
+      border: none;
+      border-radius: var(--raio-md);
+      font-weight: var(--fonte-peso-semibold);
+      cursor: pointer;
+      transition: all var(--transicao-rapida);
+      display: flex;
+      align-items: center;
+      gap: var(--espaco-sm);
+      text-decoration: none;
+    }
+
+    .btn-nova svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .btn-nova:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--sombra-lg);
+    }
+
+    .celulas-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: var(--espaco-lg);
+      margin-top: var(--espaco-lg);
+    }
+
+    .celula-card {
+      background: var(--cor-fundo);
+      border-radius: var(--raio-lg);
+      overflow: hidden;
+      box-shadow: var(--sombra-md);
+      transition: all var(--transicao-normal);
+      animation: slideUp 0.5s ease-out;
+      border: 1px solid #d7e3f3;
+    }
+
+    .celula-card.audiencia-homens {
+      border-left: 5px solid #2563eb;
+    }
+
+    .celula-card.audiencia-mulheres {
+      border-left: 5px solid #d946ef;
+    }
+
+    .celula-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--sombra-lg);
+    }
+
+    .celula-header {
+      background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
+      color: var(--cor-fundo-dark);
+      padding: var(--espaco-lg);
+      border-bottom: 1px solid #d7e3f3;
+    }
+
+    .celula-nome {
+      font-size: var(--fonte-tamanho-lg);
+      font-weight: var(--fonte-peso-bold);
+      margin-bottom: var(--espaco-sm);
+    }
+
+    .celula-dia {
+      font-size: var(--fonte-tamanho-sm);
+      color: var(--cor-texto-light);
+    }
+
+    .celula-body {
+      padding: var(--espaco-lg);
+    }
+
+    .celula-info {
+      display: flex;
+      align-items: center;
+      gap: var(--espaco-md);
+      margin-bottom: var(--espaco-md);
+    }
+
+    .celula-info-icon {
+      width: 20px;
+      height: 20px;
+      color: #4b5563;
+      flex-shrink: 0;
+    }
+
+    .celula-info-icon svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .celula-info-texto {
+      flex: 1;
+    }
+
+    .celula-info-label {
+      font-size: var(--fonte-tamanho-sm);
+      color: var(--cor-texto-light);
+    }
+
+    .celula-info-valor {
+      font-weight: var(--fonte-peso-semibold);
+      color: var(--cor-fundo-dark);
+    }
+
+    .celula-footer {
+      padding: var(--espaco-md) var(--espaco-lg);
+      border-top: 1px solid var(--cor-borda);
+      display: flex;
+      gap: var(--espaco-sm);
+    }
+
+    .btn-celula {
+      flex: 1;
+      padding: var(--espaco-xs) var(--espaco-md);
+      border: none;
+      border-radius: var(--raio-md);
+      font-size: var(--fonte-tamanho-sm);
+      font-weight: var(--fonte-peso-medium);
+      cursor: pointer;
+      transition: all var(--transicao-rapida);
+    }
+
+    .btn-ver {
+      background: var(--cor-info);
+      color: var(--cor-fundo);
+    }
+
+    .btn-ver:hover {
+      background: #2563eb;
+    }
+
+    .vazio {
+      text-align: center;
+      padding: var(--espaco-2xl);
+      color: var(--cor-texto-light);
+    }
+
+    .vazio-icon {
+      font-size: 48px;
+      margin-bottom: var(--espaco-md);
+    }
+
+    .dias-semana {
+      display: flex;
+      gap: var(--espaco-xs);
+      margin-top: var(--espaco-md);
+    }
+
+    .dia-badge {
+      flex: 1;
+      padding: var(--espaco-xs);
+      background: var(--cor-primaria-light);
+      border: 1px solid var(--cor-primaria);
+      border-radius: var(--raio-sm);
+      text-align: center;
+      font-size: 11px;
+      font-weight: var(--fonte-peso-medium);
+      color: var(--cor-primaria);
+    }
+
+    .loading-state {
+      display: none;
+      text-align: center;
+      padding: var(--espaco-2xl);
+    }
+
+    .filtros-celulas {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: var(--espaco-sm);
+      margin-bottom: var(--espaco-md);
+    }
+
+    .filtro-celula-grupo {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .filtro-celula-grupo label {
+      font-size: var(--fonte-tamanho-sm);
+      color: var(--cor-texto);
+      font-weight: var(--fonte-peso-medium);
+    }
+
+    .filtro-celula-grupo input,
+    .filtro-celula-grupo select {
+      padding: var(--espaco-sm) var(--espaco-md);
+      border: 1px solid var(--cor-borda);
+      border-radius: var(--raio-md);
+      font-size: var(--fonte-tamanho-sm);
+    }
+
+    .filtros-audiencia {
+      display: flex;
+      gap: var(--espaco-sm);
+      flex-wrap: wrap;
+      margin-bottom: var(--espaco-md);
+    }
+
+    .filtro-chip {
+      border: 1px solid var(--cor-borda);
+      background: var(--cor-fundo);
+      color: var(--cor-texto);
+      border-radius: 999px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: var(--fonte-peso-medium);
+      transition: all var(--transicao-rapida);
+    }
+
+    .filtro-chip.ativo {
+      border-color: var(--cor-primaria);
+      color: var(--cor-primaria-dark);
+      background: var(--cor-primaria-light);
+    }
+
+    .audiencia-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #eaf2ff;
+      border: 1px solid #c9dcff;
+      color: #123a76;
+      font-size: 12px;
+      font-weight: var(--fonte-peso-semibold);
+      margin-top: var(--espaco-sm);
+    }
+
+    .tipos-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: var(--espaco-sm);
+    }
+
+    .tipo-badge {
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: #f1f5f9;
+      border: 1px solid #dbe4ef;
+      color: #344255;
+      font-weight: var(--fonte-peso-medium);
+    }
+
+    .modal-celula {
+      max-width: 760px;
+      width: 95%;
+    }
+
+    .form-celula-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--espaco-md);
+    }
+
+    .form-celula-grid .full {
+      grid-column: 1 / -1;
+    }
+
+    .tipos-opcoes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--espaco-sm);
+    }
+
+    .tipo-opcao {
+      border: 1px solid var(--cor-borda);
+      border-radius: 999px;
+      padding: 7px 12px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all var(--transicao-rapida);
+      user-select: none;
+      background: #fff;
+    }
+
+    .tipo-opcao input {
+      display: none;
+    }
+
+    .tipo-opcao.ativo {
+      border-color: var(--cor-primaria);
+      color: var(--cor-primaria-dark);
+      background: var(--cor-primaria-light);
+    }
+
+    @media (max-width: 768px) {
+      .celulas-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .filtros-celulas {
+        grid-template-columns: 1fr;
+      }
+
+      .celulas-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-celula-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-content">
+      <a class="navbar-brand" href="/dashboard.html">WAVE</a>
+      <button class="navbar-hamburger" id="btnHamburger" aria-label="Abrir menu" style="display:none">
+        <svg width="28" height="28" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="navbar-menu" id="navbarMenu">
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="/membros.html">Membros</a>
+        <a href="/importacao.html">Importar CSV</a>
+      </div>
+      <div class="navbar-user">
+        <span id="nomeUsuario">Carregando...</span>
+        <button class="btn-logout">Sair</button>
+      </div>
+    </div>
+    <div class="navbar-mobile-overlay" id="navbarMobileOverlay" style="display:none">
+      <div class="navbar-mobile-menu">
+        <button class="navbar-mobile-close" id="btnCloseMobileMenu" aria-label="Fechar menu">✕</button>
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="/membros.html">Membros</a>
+        <a href="/importacao.html">Importar CSV</a>
+      </div>
+    </div>
+    <style>
+      @media (max-width: 900px) {
+        .navbar-menu {
+          display: none !important;
+        }
+        .navbar-hamburger {
+          display: block !important;
+          background: none;
+          border: none;
+          margin-left: auto;
+          cursor: pointer;
+          padding: 6px;
+        }
+        .navbar-mobile-overlay {
+          display: none;
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0,0,0,0.7);
+          z-index: 2000;
+          align-items: flex-start;
+          justify-content: flex-end;
+        }
+        .navbar-mobile-overlay.ativo {
+          display: flex !important;
+        }
+        .navbar-mobile-menu {
+          background: var(--cor-fundo-dark);
+          color: var(--cor-fundo);
+          width: 220px;
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          gap: var(--espaco-lg);
+          padding: var(--espaco-xl) var(--espaco-lg) var(--espaco-lg) var(--espaco-lg);
+          box-shadow: -2px 0 12px rgba(0,0,0,0.2);
+          position: relative;
+        }
+        .navbar-mobile-menu a {
+          color: var(--cor-fundo);
+          font-size: var(--fonte-tamanho-lg);
+          font-weight: var(--fonte-peso-semibold);
+          text-decoration: none;
+          padding: var(--espaco-md) 0;
+          border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .navbar-mobile-close {
+          position: absolute;
+          top: var(--espaco-md);
+          right: var(--espaco-md);
+          background: none;
+          border: none;
+          color: var(--cor-fundo);
+          font-size: 28px;
+          cursor: pointer;
+        }
+      }
+    </style>
+    <script>
+      // Menu hambúrguer mobile
+      const btnHamburger = document.getElementById('btnHamburger');
+      const navbarMobileOverlay = document.getElementById('navbarMobileOverlay');
+      const btnCloseMobileMenu = document.getElementById('btnCloseMobileMenu');
+      function abrirMenuMobile() {
+        navbarMobileOverlay.classList.add('ativo');
+        navbarMobileOverlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+      function fecharMenuMobile() {
+        navbarMobileOverlay.classList.remove('ativo');
+        navbarMobileOverlay.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+      btnHamburger.addEventListener('click', abrirMenuMobile);
+      btnCloseMobileMenu.addEventListener('click', fecharMenuMobile);
+      navbarMobileOverlay.addEventListener('click', function(e) {
+        if (e.target === navbarMobileOverlay) fecharMenuMobile();
+      });
+      // Mostrar botão só no mobile
+      function toggleHamburger() {
+        if (window.innerWidth <= 900) {
+          btnHamburger.style.display = 'block';
+        } else {
+          btnHamburger.style.display = 'none';
+          fecharMenuMobile();
+        }
+      }
+      window.addEventListener('resize', toggleHamburger);
+      toggleHamburger();
+    </script>
+  </nav>
+
+  <div class="celulas-container">
+    <div class="celulas-content">
+      <div class="celulas-header">
+        <h1>Células</h1>
+        <button class="btn-nova" id="btnNovaCelula">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          Nova Célula
+        </button>
+      </div>
+
+      <div class="filtros-celulas">
+        <div class="filtro-celula-grupo">
+          <label for="filtroBuscaCelula">Buscar</label>
+          <input type="text" id="filtroBuscaCelula" placeholder="Nome, bairro ou cidade">
+        </div>
+
+        <div class="filtro-celula-grupo">
+          <label for="filtroLiderCelula">Líder</label>
+          <select id="filtroLiderCelula">
+            <option value="">Todos</option>
+          </select>
+        </div>
+
+        <div class="filtro-celula-grupo">
+          <label for="filtroTipoCelula">Tipo</label>
+          <select id="filtroTipoCelula">
+            <option value="">Todos</option>
+            <option value="Kids">Kids</option>
+            <option value="Teens">Teens</option>
+            <option value="Adolescente">Adolescente</option>
+            <option value="Adulto">Adulto</option>
+          </select>
+        </div>
+
+        <div class="filtro-celula-grupo">
+          <label for="filtroTamanhoPaginaCelula">Itens por página</label>
+          <select id="filtroTamanhoPaginaCelula">
+            <option value="12">12</option>
+            <option value="24">24</option>
+            <option value="48">48</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filtros-audiencia" id="filtrosCelulas">
+        <button type="button" class="filtro-chip ativo" data-audiencia="todas">Todas</button>
+        <button type="button" class="filtro-chip" data-audiencia="homens">Homens</button>
+        <button type="button" class="filtro-chip" data-audiencia="mulheres">Mulheres</button>
+      </div>
+
+      <div class="loading-state" id="carregando">
+        <div class="spinner"></div>
+        <p style="margin-top: var(--espaco-md); color: var(--cor-texto-light);">Carregando células...</p>
+      </div>
+
+      <div class="celulas-grid" id="celulasContainer"></div>
+      <div class="paginacao" id="paginacaoCelulas"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop oculto" id="modalNovaCelula">
+    <div class="modal modal-celula">
+      <div class="modal-header">
+        <h3>Nova Célula</h3>
+        <button class="fechar-modal" id="btnFecharModal" aria-label="Fechar">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="formNovaCelula">
+          <div class="form-celula-grid">
+            <div class="grupo-form">
+              <label for="celulaLider">Líder <span class="obrigatorio">*</span></label>
+              <select id="celulaLider" name="celulaLider" required>
+                <option value="">Selecione...</option>
+              </select>
+            </div>
+
+            <div class="grupo-form">
+              <label for="celulaPublico">Público Principal <span class="obrigatorio">*</span></label>
+              <select id="celulaPublico" name="celulaPublico" required>
+                <option value="homens">Homens</option>
+                <option value="mulheres">Mulheres</option>
+              </select>
+            </div>
+
+            <div class="grupo-form">
+              <label for="celulaDia">Dia da Semana <span class="obrigatorio">*</span></label>
+              <select id="celulaDia" name="celulaDia" required>
+                <option value="">Selecione...</option>
+                <option value="1">Segunda</option>
+                <option value="2">Terça</option>
+                <option value="3">Quarta</option>
+                <option value="4">Quinta</option>
+                <option value="5">Sexta</option>
+                <option value="6">Sábado</option>
+                <option value="0">Domingo</option>
+              </select>
+            </div>
+
+            <div class="grupo-form">
+              <label for="celulaHorario">Horário <span class="obrigatorio">*</span></label>
+              <input id="celulaHorario" name="celulaHorario" type="time" required>
+            </div>
+
+            <div class="grupo-form full">
+              <label>Tipos da Célula <span class="obrigatorio">*</span></label>
+              <div class="tipos-opcoes" id="tiposCelula">
+                <label class="tipo-opcao"><input type="checkbox" value="Kids">Kids</label>
+                <label class="tipo-opcao"><input type="checkbox" value="Teens">Teens</label>
+                <label class="tipo-opcao"><input type="checkbox" value="Adolescente">Adolescente</label>
+                <label class="tipo-opcao"><input type="checkbox" value="Adulto">Adulto</label>
+              </div>
+            </div>
+
+            <div class="grupo-form">
+              <label for="celulaRua">Rua <span class="obrigatorio">*</span></label>
+              <input id="celulaRua" name="celulaRua" type="text" required>
+            </div>
+
+            <div class="grupo-form">
+              <label for="celulaNumero">Número <span class="obrigatorio">*</span></label>
+              <input id="celulaNumero" name="celulaNumero" type="text" required>
+            </div>
+
+            <div class="grupo-form full">
+              <label for="celulaComplemento">Complemento</label>
+              <input id="celulaComplemento" name="celulaComplemento" type="text">
+            </div>
+
+            <div class="grupo-form">
+              <label for="celulaBairro">Bairro <span class="obrigatorio">*</span></label>
+              <input id="celulaBairro" name="celulaBairro" type="text" required>
+            </div>
+
+            <div class="grupo-form">
+              <label for="celulaCidade">Cidade <span class="obrigatorio">*</span></label>
+              <input id="celulaCidade" name="celulaCidade" type="text" required>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btnCancelarModal" type="button">Cancelar</button>
+        <button class="btn btn-primary" id="btnSalvarCelula" type="button">Salvar Célula</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/utils.js"></script>
+  <script>
+    if (!protegerRota()) throw new Error('Não autenticado');
+
+    const container = DOM.obter('#celulasContainer');
+    const btnNovaCelula = DOM.obter('#btnNovaCelula');
+    const carregando = DOM.obter('#carregando');
+    const filtrosCelulas = DOM.obter('#filtrosCelulas');
+    const filtroBuscaCelula = DOM.obter('#filtroBuscaCelula');
+    const filtroLiderCelula = DOM.obter('#filtroLiderCelula');
+    const filtroTipoCelula = DOM.obter('#filtroTipoCelula');
+    const filtroTamanhoPaginaCelula = DOM.obter('#filtroTamanhoPaginaCelula');
+    const paginacaoCelulas = DOM.obter('#paginacaoCelulas');
+    const modalNovaCelula = DOM.obter('#modalNovaCelula');
+    const btnFecharModal = DOM.obter('#btnFecharModal');
+    const btnCancelarModal = DOM.obter('#btnCancelarModal');
+    const btnSalvarCelula = DOM.obter('#btnSalvarCelula');
+    const formNovaCelula = DOM.obter('#formNovaCelula');
+    const selectLider = DOM.obter('#celulaLider');
+    const tiposCelula = DOM.obter('#tiposCelula');
+    let audienciaSelecionada = 'todas';
+    let paginaAtualCelulas = 1;
+    let debounceCelulasTimer;
+
+    const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+
+    filtrosCelulas.addEventListener('click', (e) => {
+      const btn = e.target.closest('.filtro-chip');
+      if (!btn) return;
+
+      DOM.obterTodos('.filtro-chip').forEach(x => x.classList.remove('ativo'));
+      btn.classList.add('ativo');
+      audienciaSelecionada = btn.dataset.audiencia;
+      paginaAtualCelulas = 1;
+      carregarCelulas();
+    });
+
+    [filtroBuscaCelula, filtroLiderCelula, filtroTipoCelula, filtroTamanhoPaginaCelula].forEach(el => {
+      el.addEventListener('input', () => {
+        clearTimeout(debounceCelulasTimer);
+        debounceCelulasTimer = setTimeout(() => {
+          paginaAtualCelulas = 1;
+          carregarCelulas();
+        }, 240);
+      });
+
+      el.addEventListener('change', () => {
+        clearTimeout(debounceCelulasTimer);
+        paginaAtualCelulas = 1;
+        carregarCelulas();
+      });
+    });
+
+    btnNovaCelula.addEventListener('click', () => {
+      abrirModalNovaCelula();
+    });
+
+    btnFecharModal.addEventListener('click', fecharModalNovaCelula);
+    btnCancelarModal.addEventListener('click', fecharModalNovaCelula);
+
+    modalNovaCelula.addEventListener('click', (e) => {
+      if (e.target === modalNovaCelula) fecharModalNovaCelula();
+    });
+
+    tiposCelula.addEventListener('change', (e) => {
+      const input = e.target.closest('input[type="checkbox"]');
+      if (!input) return;
+      input.closest('.tipo-opcao').classList.toggle('ativo', input.checked);
+    });
+
+    btnSalvarCelula.addEventListener('click', async () => {
+      const liderNome = DOM.obter('#celulaLider').selectedOptions[0]?.textContent?.trim() || '';
+
+      const tiposSelecionados = Array.from(
+        formNovaCelula.querySelectorAll('#tiposCelula input[type="checkbox"]:checked')
+      ).map(x => x.value);
+
+      const dados = {
+        name: liderNome,
+        leaderId: DOM.obter('#celulaLider').value,
+        audience: DOM.obter('#celulaPublico').value,
+        meetingDay: DOM.obter('#celulaDia').value,
+        meetingTime: DOM.obter('#celulaHorario').value,
+        types: tiposSelecionados,
+        street: DOM.obter('#celulaRua').value.trim(),
+        number: DOM.obter('#celulaNumero').value.trim(),
+        complement: DOM.obter('#celulaComplemento').value.trim(),
+        neighborhood: DOM.obter('#celulaBairro').value.trim(),
+        city: DOM.obter('#celulaCidade').value.trim()
+      };
+
+      if (!dados.leaderId || !dados.name || !dados.meetingDay || !dados.meetingTime || !dados.street || !dados.number || !dados.neighborhood || !dados.city) {
+        Notificacao.aviso('Preencha os campos obrigatórios.');
+        return;
+      }
+
+      if (dados.types.length === 0) {
+        Notificacao.aviso('Selecione ao menos um tipo para esta célula.');
+        return;
+      }
+
+      try {
+        await CelulasApi.criar(dados);
+        fecharModalNovaCelula();
+        Notificacao.sucesso('Célula criada com sucesso.');
+        carregarCelulas();
+      } catch (erro) {
+        console.error(erro);
+        Notificacao.erro('Erro ao criar célula.');
+      }
+    });
+
+    function abrirModalNovaCelula() {
+      formNovaCelula.reset();
+      formNovaCelula.querySelectorAll('.tipo-opcao').forEach(x => x.classList.remove('ativo'));
+      DOM.mostrar(modalNovaCelula);
+    }
+
+    function fecharModalNovaCelula() {
+      DOM.ocultar(modalNovaCelula);
+    }
+
+    async function carregarLideres() {
+      try {
+        const res = await LideresApi.listar(1, 100);
+        const itens = res.items || [];
+        itens.forEach(lider => {
+          selectLider.appendChild(DOM.criar('option', { value: lider.id }, lider.fullName));
+          filtroLiderCelula.appendChild(DOM.criar('option', { value: lider.id }, lider.fullName));
+        });
+      } catch (erro) {
+        console.error(erro);
+        Notificacao.aviso('Não foi possível carregar líderes.');
+      }
+    }
+
+    async function carregarCelulas() {
+      try {
+        DOM.mostrar(carregando);
+        DOM.limpar(container);
+
+        const resposta = await CelulasApi.listar(1, 100);
+
+        const obterAudiencia = (celula) => {
+          if (celula.audience) return celula.audience;
+          const nome = (celula.name || '').toLowerCase();
+          if (nome.includes('homem')) return 'homens';
+          if (nome.includes('mulher')) return 'mulheres';
+          return 'todas';
+        };
+
+        const termoBusca = (filtroBuscaCelula.value || '').toLowerCase().trim();
+        const liderFiltro = filtroLiderCelula.value;
+        const tipoFiltro = filtroTipoCelula.value;
+        const tamanhoPagina = parseInt(filtroTamanhoPaginaCelula.value || '12');
+
+        const itensFiltrados = (resposta.items || []).filter(c => {
+          if (audienciaSelecionada !== 'todas' && obterAudiencia(c) !== audienciaSelecionada) return false;
+
+          if (termoBusca) {
+            const alvo = [c.name, c.neighborhood, c.city]
+              .filter(Boolean)
+              .join(' ')
+              .toLowerCase();
+            if (!alvo.includes(termoBusca)) return false;
+          }
+
+          if (liderFiltro && c.leader?.id !== liderFiltro && c.leaderId !== liderFiltro) return false;
+          if (tipoFiltro && !(c.types || []).includes(tipoFiltro)) return false;
+
+          return true;
+        });
+
+        const totalItems = itensFiltrados.length;
+        const totalPages = Math.max(1, Math.ceil(totalItems / tamanhoPagina));
+        if (paginaAtualCelulas > totalPages) paginaAtualCelulas = totalPages;
+
+        const start = (paginaAtualCelulas - 1) * tamanhoPagina;
+        const itens = itensFiltrados.slice(start, start + tamanhoPagina);
+
+        if (!itens || itens.length === 0) {
+          container.innerHTML = `
+            <div style="grid-column: 1 / -1;">
+              <div class="vazio">
+                <div class="vazio-icon">—</div>
+                <p>Nenhuma célula cadastrada</p>
+              </div>
+            </div>
+          `;
+          DOM.ocultar(carregando);
+          DOM.limpar(paginacaoCelulas);
+          return;
+        }
+
+        itens.forEach(celula => {
+          const tipo = obterAudiencia(celula);
+          const tipoLabel = tipo === 'homens' ? 'Homens' : tipo === 'mulheres' ? 'Mulheres' : 'Geral';
+          const tiposHtml = (celula.types || []).map(t => `<span class="tipo-badge">${t}</span>`).join('');
+          const card = DOM.criar('div', { className: `celula-card audiencia-${tipo}` }, `
+            <div class="celula-header">
+              <div class="celula-nome">${celula.name}</div>
+              <div class="celula-dia">
+                ${diasSemana[celula.meetingDay || 0]} 
+                ${celula.meetingTime ? ` às ${celula.meetingTime.slice(0, 5)}` : ''}
+              </div>
+              <div class="audiencia-badge">${tipoLabel}</div>
+              ${tiposHtml ? `<div class="tipos-badges">${tiposHtml}</div>` : ''}
+            </div>
+            <div class="celula-body">
+              <div class="celula-info">
+                <div class="celula-info-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+                </div>
+                <div class="celula-info-texto">
+                  <div class="celula-info-label">Líder</div>
+                  <div class="celula-info-valor">${celula.leader?.fullName || '—'}</div>
+                </div>
+              </div>
+
+              <div class="celula-info">
+                <div class="celula-info-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M12 21s7-5.3 7-11a7 7 0 1 0-14 0c0 5.7 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                </div>
+                <div class="celula-info-texto">
+                  <div class="celula-info-label">Localização</div>
+                  <div class="celula-info-valor">${celula.neighborhood ? celula.neighborhood + ' - ' : ''}${celula.city || '—'}</div>
+                </div>
+              </div>
+
+              <div class="celula-info">
+                <div class="celula-info-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.5"/><path d="M15 20h6"/></svg>
+                </div>
+                <div class="celula-info-texto">
+                  <div class="celula-info-label">Membros</div>
+                  <div class="celula-info-valor">${celula.members?.length || 0}</div>
+                </div>
+              </div>
+            </div>
+            <div class="celula-footer">
+              <button class="btn-celula btn-ver" onclick="visualizarCelula('${celula.id}')">Ver Detalhes</button>
+              <button class="btn-celula btn-ver" onclick="editarCelula('${celula.id}')">Editar</button>
+            </div>
+          `);
+          container.appendChild(card);
+        });
+
+        DOM.ocultar(carregando);
+
+        if (totalPages > 1) {
+          Paginacao.renderizar(paginaAtualCelulas, totalPages, (novaPagina) => {
+            paginaAtualCelulas = novaPagina;
+            carregarCelulas();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }, '#paginacaoCelulas');
+        } else {
+          DOM.limpar(paginacaoCelulas);
+        }
+
+      } catch (erro) {
+        console.error('Erro:', erro);
+        container.innerHTML = `
+          <div style="grid-column: 1 / -1;">
+            <div class="vazio">
+              <div class="vazio-icon">—</div>
+              <p>Erro ao carregar células</p>
+            </div>
+          </div>
+        `;
+        DOM.ocultar(carregando);
+        DOM.limpar(paginacaoCelulas);
+      }
+    }
+
+    function visualizarCelula(id) {
+      window.location.href = `/visualizar-celula.html?id=${id}`;
+    }
+
+    function editarCelula(id) {
+      window.location.href = `/visualizar-celula.html?id=${id}&editar=1`;
+    }
+
+    carregarLideres();
+    carregarCelulas();
+  </script>
+</body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WAVE - Cadastro de Membros</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" type="image/png" href="imagens/IMG_2261.PNG">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    .landing-container {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0066cc 0%, #0052a3 50%, #1a1a1a 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .landing-bg-decoration {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      overflow: hidden;
+    }
+
+    .blob {
+      position: absolute;
+      opacity: 0.1;
+      border-radius: 50%;
+    }
+
+    .blob-1 {
+      width: 500px;
+      height: 500px;
+      background: white;
+      top: -100px;
+      right: -100px;
+      animation: float 20s infinite ease-in-out;
+    }
+
+    .blob-2 {
+      width: 300px;
+      height: 300px;
+      background: white;
+      bottom: -50px;
+      left: -50px;
+      animation: float 15s infinite ease-in-out reverse;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0); }
+      25% { transform: translate(30px, -30px); }
+      50% { transform: translate(-30px, 30px); }
+      75% { transform: translate(30px, 30px); }
+    }
+
+    .landing-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      color: white;
+      padding: var(--espaco-lg);
+      max-width: 600px;
+      animation: slideUp 0.8s ease-out;
+    }
+
+    .landing-logo {
+      width: min(340px, 72vw);
+      margin: 0 auto var(--espaco-lg);
+      margin-bottom: var(--espaco-lg);
+      animation: bounce 2s infinite;
+    }
+
+    .landing-logo img {
+      width: 100%;
+      height: auto;
+      display: block;
+      filter: drop-shadow(0 16px 28px rgba(0, 0, 0, 0.35));
+    }
+
+    .landing-titulo {
+      font-size: 48px;
+      font-weight: var(--fonte-peso-bold);
+      margin-bottom: var(--espaco-md);
+      line-height: 1.2;
+    }
+
+    .landing-descricao {
+      font-size: var(--fonte-tamanho-lg);
+      opacity: 0.9;
+      margin-bottom: var(--espaco-xl);
+      line-height: 1.6;
+    }
+
+    .landing-botoes {
+      display: flex;
+      gap: var(--espaco-lg);
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-landing {
+      padding: var(--espaco-md) var(--espaco-xl);
+      font-size: var(--fonte-tamanho-base);
+      font-weight: var(--fonte-peso-semibold);
+      border: none;
+      border-radius: var(--raio-md);
+      cursor: pointer;
+      transition: all var(--transicao-rapida);
+      text-decoration: none;
+      display: inline-block;
+      min-width: 200px;
+    }
+
+    .btn-entrar {
+      background: white;
+      color: var(--cor-primaria);
+    }
+
+    .btn-entrar:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-saibamais {
+      background: transparent;
+      color: white;
+      border: 2px solid white;
+    }
+
+    .btn-saibamais:hover {
+      background: white;
+      color: var(--cor-primaria);
+    }
+
+    .landing-features {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      padding: var(--espaco-2xl) var(--espaco-lg);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--espaco-lg);
+      color: white;
+    }
+
+    .feature {
+      text-align: center;
+    }
+
+    .feature-icon {
+      font-size: 32px;
+      margin-bottom: var(--espaco-sm);
+    }
+
+    .feature-titulo {
+      font-weight: var(--fonte-peso-semibold);
+      margin-bottom: var(--espaco-xs);
+    }
+
+    .feature-desc {
+      font-size: var(--fonte-tamanho-sm);
+      opacity: 0.8;
+    }
+
+    @media (max-width: 768px) {
+      .landing-titulo {
+        font-size: 32px;
+      }
+
+      .landing-logo {
+        font-size: 60px;
+      }
+
+      .landing-botoes {
+        gap: var(--espaco-md);
+      }
+
+      .btn-landing {
+        min-width: 150px;
+        padding: var(--espaco-sm) var(--espaco-md);
+        font-size: var(--fonte-tamanho-sm);
+      }
+
+      .landing-features {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--espaco-md);
+        padding: var(--espaco-lg);
+      }
+
+      .feature-icon {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="landing-container">
+    <div class="landing-bg-decoration">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+    </div>
+
+    <div class="landing-content">
+      <div class="landing-logo">
+        <img src="imagens/Logo-Wave-Vertical.png" alt="Logo WAVE">
+      </div>
+      <h1 class="landing-titulo">WAVE</h1>
+      <p class="landing-descricao">
+        Sistema moderno e inteligente para gerenciar e cadastrar membros da sua comunidade
+      </p>
+      <div class="landing-botoes">
+        <a href="/login.html" class="btn-landing btn-entrar">Fazer Login</a>
+        <a href="#" class="btn-landing btn-saibamais" onclick="document.querySelector('.landing-features').scrollIntoView(); return false;">Saiba Mais</a>
+      </div>
+    </div>
+
+    <div class="landing-features">
+      <div class="feature">
+        <div class="feature-icon">M</div>
+        <div class="feature-titulo">Gerenciamento</div>
+        <div class="feature-desc">Controle completo de membros e células</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">I</div>
+        <div class="feature-titulo">Importação</div>
+        <div class="feature-desc">Importe dados via CSV facilmente</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">D</div>
+        <div class="feature-titulo">Dashboard</div>
+        <div class="feature-desc">Visualize estatísticas em tempo real</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">S</div>
+        <div class="feature-titulo">Segurança</div>
+        <div class="feature-desc">Autenticação JWT com criptografia</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Redirecionar se já autenticado
+    if (localStorage.getItem('cadastro_membros_token')) {
+      window.location.href = resolverRotaLocal('/dashboard.html');
+    }
+  </script>
+</body>
+</html>

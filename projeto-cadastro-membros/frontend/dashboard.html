@@ -1,0 +1,1357 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Cadastro de Membros</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" type="image/png" href="imagens/IMG_2261.PNG">
+  <style>
+    .dashboard-container {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    }
+
+    .dashboard-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--espaco-xl) var(--espaco-md);
+    }
+
+    .dashboard-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--espaco-lg);
+      margin-bottom: var(--espaco-2xl);
+      animation: slideDown 0.6s ease-out;
+    }
+
+    .dashboard-header-texto {
+      min-width: 0;
+    }
+
+    .dashboard-header-logo {
+      width: 84px;
+      height: 84px;
+      border-radius: 20px;
+      padding: 10px;
+      background: linear-gradient(145deg, #f8fafc, #e2e8f0);
+      box-shadow: 0 14px 26px rgba(15, 23, 42, 0.12);
+      flex-shrink: 0;
+    }
+
+    .dashboard-header-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .dashboard-header h1 {
+      font-size: var(--fonte-tamanho-2xl);
+      color: var(--cor-fundo-dark);
+      margin-bottom: var(--espaco-md);
+    }
+
+    .dashboard-header p {
+      color: var(--cor-texto-light);
+      font-size: var(--fonte-tamanho-lg);
+    }
+
+    .cards-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--espaco-lg);
+      margin-bottom: var(--espaco-2xl);
+    }
+
+    .card-stat {
+      background: var(--cor-fundo);
+      border-radius: var(--raio-lg);
+      padding: var(--espaco-lg);
+      box-shadow: var(--sombra-md);
+      transition: all var(--transicao-normal);
+      border-left: 4px solid transparent;
+      position: relative;
+      overflow: hidden;
+      animation: slideUp 0.6s ease-out;
+    }
+
+    .card-stat::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: -40px;
+      width: 100px;
+      height: 100px;
+      background: rgba(0, 102, 204, 0.1);
+      border-radius: 50%;
+      transition: all var(--transicao-normal);
+    }
+
+    .card-stat:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--sombra-lg);
+    }
+
+    .card-stat:hover::before {
+      right: -20px;
+    }
+
+    .card-stat.membros {
+      border-left-color: var(--cor-primaria);
+    }
+
+    .card-stat.celulas {
+      border-left-color: var(--cor-sucesso);
+    }
+
+    .card-stat.aniversariantes {
+      border-left-color: var(--cor-aviso);
+    }
+
+    .card-stat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--espaco-md);
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-stat-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: currentColor;
+    }
+
+    .card-stat-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .card-stat.membros .card-stat-icon {
+      background: rgba(0, 102, 204, 0.1);
+      color: var(--cor-primaria);
+    }
+
+    .card-stat.celulas .card-stat-icon {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--cor-sucesso);
+    }
+
+    .card-stat.aniversariantes .card-stat-icon {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--cor-aviso);
+    }
+
+    .card-stat-titulo {
+      font-size: var(--fonte-tamanho-sm);
+      color: var(--cor-texto-light);
+      font-weight: var(--fonte-peso-medium);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: var(--espaco-sm);
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-stat-valor {
+      font-size: var(--fonte-tamanho-2xl);
+      font-weight: var(--fonte-peso-bold);
+      color: var(--cor-fundo-dark);
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-stat-footer {
+      margin-top: var(--espaco-md);
+      padding-top: var(--espaco-md);
+      border-top: 1px solid var(--cor-borda);
+      font-size: var(--fonte-tamanho-sm);
+      color: var(--cor-texto-light);
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-stat-footer span {
+      font-weight: var(--fonte-peso-semibold);
+      color: var(--cor-primaria);
+    }
+
+    .menu-rapido {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: var(--espaco-md);
+      margin-top: var(--espaco-xl);
+      padding: var(--espaco-lg);
+      background: var(--cor-fundo);
+      border-radius: var(--raio-lg);
+      box-shadow: var(--sombra-md);
+      animation: slideUp 0.7s ease-out;
+    }
+
+    .menu-item {
+      padding: var(--espaco-lg);
+      background: linear-gradient(135deg, var(--cor-primaria-light) 0%, #f0f5ff 100%);
+      border-radius: var(--raio-md);
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transicao-normal);
+      border: 2px solid transparent;
+      text-decoration: none;
+    }
+
+    .menu-item:hover {
+      border-color: var(--cor-primaria);
+      transform: scale(1.05);
+      box-shadow: var(--sombra-md);
+    }
+
+    .menu-item-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: var(--espaco-md);
+      color: var(--cor-fundo-dark);
+    }
+
+    .menu-item-icon svg {
+      width: 28px;
+      height: 28px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .menu-item-label {
+      font-weight: var(--fonte-peso-semibold);
+      color: var(--cor-fundo-dark);
+    }
+
+    .stats-overview {
+      background: var(--cor-fundo);
+      border-radius: var(--raio-lg);
+      padding: var(--espaco-lg);
+      box-shadow: var(--sombra-md);
+      margin-top: var(--espaco-2xl);
+      animation: slideUp 0.7s ease-out;
+    }
+
+    .stats-overview h3 {
+      margin-bottom: var(--espaco-lg);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: var(--espaco-md);
+      margin-bottom: var(--espaco-lg);
+    }
+
+    .stat-mini {
+      border: 1px solid var(--cor-borda);
+      border-radius: var(--raio-md);
+      padding: var(--espaco-md);
+      background: #fff;
+    }
+
+    .stat-mini-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--cor-texto-light);
+      margin-bottom: var(--espaco-xs);
+    }
+
+    .stat-mini-valor {
+      font-size: 28px;
+      font-weight: var(--fonte-peso-bold);
+      color: var(--cor-fundo-dark);
+      line-height: 1.1;
+    }
+
+    .status-bar-wrap {
+      margin-top: var(--espaco-md);
+    }
+
+    .status-bar-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--espaco-sm);
+      font-size: 13px;
+      color: var(--cor-texto-light);
+    }
+
+    .status-bar-track {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: #e9eef5;
+      overflow: hidden;
+    }
+
+    .status-bar-fill {
+      height: 100%;
+      width: 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #0f70d6 0%, #41a3ff 100%);
+      transition: width 0.4s ease;
+    }
+
+    .estrategia-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--espaco-lg);
+      margin-top: var(--espaco-lg);
+    }
+
+    .estrategia-card {
+      border: 1px solid var(--cor-borda);
+      border-radius: var(--raio-md);
+      padding: var(--espaco-md);
+      background: #fff;
+    }
+
+    .estrategia-card h4 {
+      margin-bottom: var(--espaco-sm);
+      color: var(--cor-fundo-dark);
+      font-size: var(--fonte-tamanho-base);
+    }
+
+    .lista-estrategica {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--cor-texto-light);
+      font-size: var(--fonte-tamanho-sm);
+      display: grid;
+      gap: var(--espaco-xs);
+    }
+
+    .ranking-bairros {
+      display: grid;
+      gap: var(--espaco-sm);
+    }
+
+    .cards-container .card-stat[role="button"] {
+      cursor: pointer;
+    }
+
+    .grafico-section {
+      margin-top: var(--espaco-2xl);
+      background: #fff;
+      border-radius: var(--raio-lg);
+      box-shadow: var(--sombra-md);
+      padding: var(--espaco-lg);
+      animation: slideUp 0.7s ease-out;
+    }
+
+    .grafico-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--espaco-md);
+      margin-bottom: var(--espaco-md);
+      flex-wrap: wrap;
+    }
+
+    .grafico-periodos {
+      display: flex;
+      gap: var(--espaco-sm);
+      flex-wrap: wrap;
+    }
+
+    .periodo-btn {
+      border: 1px solid var(--cor-borda);
+      background: #fff;
+      color: var(--cor-texto);
+      border-radius: 999px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-weight: var(--fonte-peso-medium);
+    }
+
+    .periodo-btn.ativo {
+      border-color: var(--cor-primaria);
+      color: var(--cor-primaria-dark);
+      background: var(--cor-primaria-light);
+    }
+
+    .periodo-customizado {
+      display: none;
+      align-items: center;
+      gap: var(--espaco-sm);
+      flex-wrap: wrap;
+      margin-bottom: var(--espaco-md);
+    }
+
+    .periodo-customizado.ativo {
+      display: flex;
+    }
+
+    .periodo-customizado input,
+    .periodo-customizado button {
+      padding: 8px 10px;
+      border-radius: var(--raio-md);
+      border: 1px solid var(--cor-borda);
+    }
+
+    .periodo-customizado button {
+      background: var(--cor-primaria);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-weight: var(--fonte-peso-semibold);
+    }
+
+    .grafico-wrap {
+      position: relative;
+    }
+
+    .grafico-vazio {
+      color: var(--cor-texto-light);
+      font-size: var(--fonte-tamanho-sm);
+      padding: var(--espaco-md) 0;
+    }
+
+    #graficoCrescimento {
+      width: 100%;
+      height: 280px;
+      border-radius: var(--raio-md);
+      background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+    }
+
+    .tooltip-grafico {
+      position: absolute;
+      pointer-events: none;
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      border-radius: var(--raio-md);
+      padding: 8px 10px;
+      font-size: 12px;
+      display: none;
+      z-index: 15;
+      min-width: 180px;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2400;
+      padding: var(--espaco-md);
+    }
+
+    .modal-overlay.ativo {
+      display: flex;
+    }
+
+    .modal-card {
+      width: min(680px, 100%);
+      max-height: 85vh;
+      overflow: auto;
+      background: #fff;
+      border-radius: var(--raio-lg);
+      padding: var(--espaco-lg);
+      box-shadow: var(--sombra-lg);
+    }
+
+    .aniversariantes-lista {
+      display: grid;
+      gap: var(--espaco-sm);
+      margin: var(--espaco-md) 0;
+    }
+
+    .aniversariante-item {
+      border: 1px solid var(--cor-borda);
+      border-radius: var(--raio-md);
+      padding: var(--espaco-sm);
+      display: flex;
+      justify-content: space-between;
+      gap: var(--espaco-sm);
+      align-items: center;
+    }
+
+    .btn-whatsapp {
+      border: none;
+      border-radius: var(--raio-md);
+      padding: 8px 10px;
+      background: #16a34a;
+      color: #fff;
+      font-weight: var(--fonte-peso-semibold);
+      cursor: pointer;
+    }
+
+    .modal-acoes {
+      display: flex;
+      justify-content: flex-end;
+      border-top: 1px solid var(--cor-borda);
+      padding-top: var(--espaco-md);
+    }
+
+    .btn-fechar-modal {
+      border: none;
+      border-radius: var(--raio-md);
+      padding: 8px 12px;
+      background: #e2e8f0;
+      color: #334155;
+      font-weight: var(--fonte-peso-semibold);
+      cursor: pointer;
+    }
+
+    .bairro-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: var(--espaco-md);
+      align-items: center;
+      font-size: var(--fonte-tamanho-sm);
+    }
+
+    .bairro-track {
+      margin-top: 4px;
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+
+    .bairro-fill {
+      display: block;
+      height: 100%;
+      width: 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+      transition: width 0.3s ease;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-content {
+        padding: var(--espaco-lg) var(--espaco-md);
+      }
+
+      .cards-container {
+        grid-template-columns: 1fr;
+      }
+
+      .dashboard-header {
+        align-items: flex-start;
+      }
+
+      .dashboard-header-logo {
+        width: 68px;
+        height: 68px;
+      }
+
+      .menu-rapido {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .estrategia-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-content">
+      <a class="navbar-brand" href="/dashboard.html">WAVE</a>
+      <button class="navbar-hamburger" id="btnHamburger" aria-label="Abrir menu" style="display:none">
+        <svg width="28" height="28" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="navbar-menu" id="navbarMenu">
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="/membros.html">Membros</a>
+        <a href="/importacao.html">Importar CSV</a>
+        <a href="/gerenciar-usuarios.html">Administração</a>
+      </div>
+      <div class="navbar-user">
+        <span id="nomeUsuario">Carregando...</span>
+        <button class="btn-logout">Sair</button>
+      </div>
+    </div>
+    <div class="navbar-mobile-overlay" id="navbarMobileOverlay" style="display:none">
+      <div class="navbar-mobile-menu">
+        <button class="navbar-mobile-close" id="btnCloseMobileMenu" aria-label="Fechar menu">✕</button>
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="/membros.html">Membros</a>
+        <a href="/importacao.html">Importar CSV</a>
+        <a href="/gerenciar-usuarios.html">Administração</a>
+      </div>
+    </div>
+    <style>
+      @media (max-width: 900px) {
+        .navbar-menu {
+          display: none !important;
+        }
+        .navbar-hamburger {
+          display: block !important;
+          background: none;
+          border: none;
+          margin-left: auto;
+          cursor: pointer;
+          padding: 6px;
+        }
+        .navbar-mobile-overlay {
+          display: none;
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0,0,0,0.7);
+          z-index: 2000;
+          align-items: flex-start;
+          justify-content: flex-end;
+        }
+        .navbar-mobile-overlay.ativo {
+          display: flex !important;
+        }
+        .navbar-mobile-menu {
+          background: var(--cor-fundo-dark);
+          color: var(--cor-fundo);
+          width: 220px;
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          gap: var(--espaco-lg);
+          padding: var(--espaco-xl) var(--espaco-lg) var(--espaco-lg) var(--espaco-lg);
+          box-shadow: -2px 0 12px rgba(0,0,0,0.2);
+          position: relative;
+        }
+        .navbar-mobile-menu a {
+          color: var(--cor-fundo);
+          font-size: var(--fonte-tamanho-lg);
+          font-weight: var(--fonte-peso-semibold);
+          text-decoration: none;
+          padding: var(--espaco-md) 0;
+          border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .navbar-mobile-close {
+          position: absolute;
+          top: var(--espaco-md);
+          right: var(--espaco-md);
+          background: none;
+          border: none;
+          color: var(--cor-fundo);
+          font-size: 28px;
+          cursor: pointer;
+        }
+      }
+    </style>
+    <script>
+      // Menu hambúrguer mobile
+      const btnHamburger = document.getElementById('btnHamburger');
+      const navbarMobileOverlay = document.getElementById('navbarMobileOverlay');
+      const btnCloseMobileMenu = document.getElementById('btnCloseMobileMenu');
+      function abrirMenuMobile() {
+        navbarMobileOverlay.classList.add('ativo');
+        navbarMobileOverlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+      function fecharMenuMobile() {
+        navbarMobileOverlay.classList.remove('ativo');
+        navbarMobileOverlay.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+      btnHamburger.addEventListener('click', abrirMenuMobile);
+      btnCloseMobileMenu.addEventListener('click', fecharMenuMobile);
+      navbarMobileOverlay.addEventListener('click', function(e) {
+        if (e.target === navbarMobileOverlay) fecharMenuMobile();
+      });
+      // Mostrar botão só no mobile
+      function toggleHamburger() {
+        if (window.innerWidth <= 900) {
+          btnHamburger.style.display = 'block';
+        } else {
+          btnHamburger.style.display = 'none';
+          fecharMenuMobile();
+        }
+      }
+      window.addEventListener('resize', toggleHamburger);
+      toggleHamburger();
+    </script>
+  </nav>
+
+  <div class="dashboard-container">
+    <div class="dashboard-content">
+      <div class="dashboard-header">
+        <div class="dashboard-header-texto">
+          <h1>Bem-vindo</h1>
+          <p>Aqui está um resumo da sua comunidade</p>
+        </div>
+        <div class="dashboard-header-logo">
+          <img src="imagens/Logo-Wave-Vertical.png" alt="WAVE">
+        </div>
+      </div>
+
+      <div class="cards-container">
+        <div class="card-stat membros">
+          <div class="card-stat-header">
+            <div>
+              <div class="card-stat-titulo">Total de Membros Ativos</div>
+              <div class="card-stat-valor" id="totalMembros">0</div>
+            </div>
+            <div class="card-stat-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="3"/><path d="M20 8v6"/><path d="M23 11h-6"/></svg>
+            </div>
+          </div>
+          <div class="card-stat-footer">
+            Membros ativos: <span id="membrosAtivos">0</span>
+          </div>
+        </div>
+
+        <div class="card-stat celulas" id="cardCelulasAtivas" role="button" tabindex="0" aria-label="Abrir listagem de células">
+          <div class="card-stat-header">
+            <div>
+              <div class="card-stat-titulo">Total de Células Ativas</div>
+              <div class="card-stat-valor" id="totalCelulas">0</div>
+            </div>
+            <div class="card-stat-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M21 2v6h-6"/><path d="M3 11a9 9 0 0 1 15.54-5.36L21 8"/><path d="M3 22v-6h6"/><path d="M21 13a9 9 0 0 1-15.54 5.36L3 16"/></svg>
+            </div>
+          </div>
+          <div class="card-stat-footer">
+            Média por célula: <span id="mediaPorCelula">0,0</span>
+          </div>
+        </div>
+
+        <div class="card-stat aniversariantes" id="cardAniversariantesMes" role="button" tabindex="0" aria-label="Abrir aniversariantes do mês">
+          <div class="card-stat-header">
+            <div>
+              <div class="card-stat-titulo">Aniversariantes</div>
+              <div class="card-stat-valor" id="totalAniversariantes">0</div>
+            </div>
+            <div class="card-stat-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M9 4c0-1.1.9-2 2-2s2 .9 2 2c0 .9-.6 1.6-1.4 1.9-.4.2-.6.6-.6 1.1V8"/><path d="M6 11h12"/><path d="M7 11V9a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2"/><path d="M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8"/><path d="M5 15h14"/></svg>
+            </div>
+          </div>
+          <div class="card-stat-footer">
+            Próximos 30 dias: <span id="aniversarios30Dias">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-rapido">
+        <a href="/cadastro-membro.html" class="menu-item">
+          <div class="menu-item-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          </div>
+          <div class="menu-item-label">Novo Membro</div>
+        </a>
+        <a href="/membros.html" class="menu-item">
+          <div class="menu-item-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="16" rx="2"/><path d="M9 8h6"/><path d="M9 12h6"/><path d="M9 16h4"/></svg>
+          </div>
+          <div class="menu-item-label">Listar Membros</div>
+        </a>
+        <a href="/celulas.html" class="menu-item">
+          <div class="menu-item-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M21 2v6h-6"/><path d="M3 11a9 9 0 0 1 15.54-5.36L21 8"/><path d="M3 22v-6h6"/><path d="M21 13a9 9 0 0 1-15.54 5.36L3 16"/></svg>
+          </div>
+          <div class="menu-item-label">Células</div>
+        </a>
+        <a href="/importacao.html" class="menu-item">
+          <div class="menu-item-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>
+          </div>
+          <div class="menu-item-label">Importar CSV</div>
+        </a>
+      </div>
+
+      <div class="stats-overview">
+        <h3>Estatísticas Relevantes</h3>
+        <div class="stats-grid">
+          <div class="stat-mini">
+            <div class="stat-mini-label">Membros Ativos</div>
+            <div class="stat-mini-valor" id="statAtivos">0</div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-mini-label">Membros Inativos</div>
+            <div class="stat-mini-valor" id="statInativos">0</div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-mini-label">Média por Célula</div>
+            <div class="stat-mini-valor" id="statMediaCelula">0,0</div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-mini-label">Aniversários no Mês</div>
+            <div class="stat-mini-valor" id="statAniversariosMes">0</div>
+          </div>
+        </div>
+
+        <div class="status-bar-wrap">
+          <div class="status-bar-head">
+            <span>Taxa de membros ativos</span>
+            <strong id="taxaAtivosTexto">0%</strong>
+          </div>
+          <div class="status-bar-track">
+            <div class="status-bar-fill" id="taxaAtivosBar"></div>
+          </div>
+        </div>
+
+        <div class="estrategia-grid">
+          <div class="estrategia-card">
+            <h4>Prioridades Imediatas</h4>
+            <ul class="lista-estrategica" id="listaPrioridades">
+              <li>Carregando prioridades...</li>
+            </ul>
+          </div>
+
+          <div class="estrategia-card">
+            <h4>Concentração por Bairro</h4>
+            <div class="ranking-bairros" id="rankingBairros">
+              <div style="font-size: var(--fonte-tamanho-sm); color: var(--cor-texto-light);">Sem dados de bairro.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grafico-section">
+        <div class="grafico-header">
+          <h3>Crescimento de Membros Ativos</h3>
+          <div class="grafico-periodos" id="graficoPeriodos">
+            <button type="button" class="periodo-btn ativo" data-periodo="anual">Anual</button>
+            <button type="button" class="periodo-btn" data-periodo="semestral">Semestral</button>
+            <button type="button" class="periodo-btn" data-periodo="trimestral">Trimestral</button>
+            <button type="button" class="periodo-btn" data-periodo="personalizado">Personalizado</button>
+          </div>
+        </div>
+        <div class="periodo-customizado" id="periodoCustomizado">
+          <label for="periodoInicio">Início</label>
+          <input type="date" id="periodoInicio">
+          <label for="periodoFim">Fim</label>
+          <input type="date" id="periodoFim">
+          <button type="button" id="btnAplicarPeriodo">Aplicar</button>
+        </div>
+        <div class="grafico-wrap">
+          <svg id="graficoCrescimento" viewBox="0 0 960 280" preserveAspectRatio="none"></svg>
+          <div class="tooltip-grafico" id="tooltipGrafico"></div>
+          <div class="grafico-vazio" id="mensagemGraficoVazio" style="display:none;">Sem dados de ingresso para o período selecionado.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalAniversariantes">
+    <div class="modal-card">
+      <h3>Aniversariantes do Mês</h3>
+      <div class="aniversariantes-lista" id="listaAniversariantesModal"></div>
+      <div class="modal-acoes">
+        <button type="button" class="btn-fechar-modal" id="btnFecharModalAniversariantes">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/utils.js"></script>
+  <script>
+    if (!protegerRota()) {
+      throw new Error('Não autenticado');
+    }
+
+    const cardCelulasAtivas = document.getElementById('cardCelulasAtivas');
+    const cardAniversariantesMes = document.getElementById('cardAniversariantesMes');
+    const modalAniversariantes = document.getElementById('modalAniversariantes');
+    const listaAniversariantesModal = document.getElementById('listaAniversariantesModal');
+    const btnFecharModalAniversariantes = document.getElementById('btnFecharModalAniversariantes');
+    const graficoSvg = document.getElementById('graficoCrescimento');
+    const tooltipGrafico = document.getElementById('tooltipGrafico');
+    const mensagemGraficoVazio = document.getElementById('mensagemGraficoVazio');
+    const graficoPeriodos = document.getElementById('graficoPeriodos');
+    const periodoCustomizado = document.getElementById('periodoCustomizado');
+    const periodoInicio = document.getElementById('periodoInicio');
+    const periodoFim = document.getElementById('periodoFim');
+    const btnAplicarPeriodo = document.getElementById('btnAplicarPeriodo');
+
+    const NOME_IGREJA = CONFIG.CHURCH_NAME;
+    let membrosCache = [];
+    let periodoSelecionado = 'anual';
+
+    function abrirModal(el) {
+      el.classList.add('ativo');
+    }
+
+    function fecharModal(el) {
+      el.classList.remove('ativo');
+    }
+
+    function toMesKey(data) {
+      return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    function labelMes(data) {
+      return data.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+    }
+
+    function parseDataISO(dataIso) {
+      if (!dataIso) return null;
+      const d = new Date(`${dataIso.slice(0, 10)}T00:00:00`);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+
+    function inicioMes(data) {
+      return new Date(data.getFullYear(), data.getMonth(), 1);
+    }
+
+    function fimMes(data) {
+      return new Date(data.getFullYear(), data.getMonth() + 1, 0);
+    }
+
+    function mesesEntre(inicio, fim) {
+      const lista = [];
+      const cursor = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
+      const limite = new Date(fim.getFullYear(), fim.getMonth(), 1);
+
+      while (cursor <= limite) {
+        lista.push(new Date(cursor));
+        cursor.setMonth(cursor.getMonth() + 1);
+      }
+
+      return lista;
+    }
+
+    function intervaloPorPeriodo(periodo) {
+      const hoje = new Date();
+      const fim = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+      let inicio = new Date(fim);
+
+      if (periodo === 'semestral') inicio.setMonth(inicio.getMonth() - 5);
+      if (periodo === 'trimestral') inicio.setMonth(inicio.getMonth() - 2);
+      if (periodo === 'anual') inicio.setMonth(inicio.getMonth() - 11);
+
+      if (periodo === 'personalizado') {
+        const ini = parseDataISO(periodoInicio.value);
+        const f = parseDataISO(periodoFim.value);
+        if (!ini || !f || ini > f) return null;
+        return { inicio: inicioMes(ini), fim: inicioMes(f) };
+      }
+
+      return { inicio, fim };
+    }
+
+    function calcularSerieCrescimento(membros, periodo) {
+      const intervalo = intervaloPorPeriodo(periodo);
+      if (!intervalo) return [];
+
+      const meses = mesesEntre(intervalo.inicio, intervalo.fim);
+
+      return meses.map(mes => {
+        const chave = toMesKey(mes);
+        const fimDoMes = fimMes(mes);
+
+        const ingressos = membros.filter(m => {
+          const ingresso = parseDataISO(m.joinDate || m.createdAt || '');
+          return ingresso && toMesKey(ingresso) === chave;
+        }).length;
+
+        const inativacoes = membros.filter(m => {
+          const dataInativacao = parseDataISO(m.inactivatedAt || m.inactiveDate || '');
+          return dataInativacao && toMesKey(dataInativacao) === chave;
+        }).length;
+
+        const acumulado = membros.filter(m => {
+          const ingresso = parseDataISO(m.joinDate || m.createdAt || '');
+          if (!ingresso || ingresso > fimDoMes) return false;
+
+          if (m.isActive) return true;
+
+          const dataInativacao = parseDataISO(m.inactivatedAt || m.inactiveDate || '');
+          if (!dataInativacao) return false;
+
+          return dataInativacao > fimDoMes;
+        }).length;
+
+        return {
+          chave,
+          label: labelMes(mes),
+          total: acumulado,
+          ingressos,
+          inativacoes
+        };
+      });
+    }
+
+    function renderizarGrafico(series) {
+      graficoSvg.innerHTML = '';
+      tooltipGrafico.style.display = 'none';
+
+      if (!series.length || series.every(p => !p.ingressos && !p.inativacoes && !p.total)) {
+        mensagemGraficoVazio.style.display = 'block';
+        return;
+      }
+
+      mensagemGraficoVazio.style.display = 'none';
+
+      const width = 960;
+      const height = 280;
+      const left = 44;
+      const right = 22;
+      const top = 22;
+      const bottom = 34;
+      const w = width - left - right;
+      const h = height - top - bottom;
+
+      const maxY = Math.max(...series.map(p => p.total), 1);
+      const stepX = series.length > 1 ? w / (series.length - 1) : w;
+
+      const pontos = series.map((p, i) => {
+        const x = left + (i * stepX);
+        const y = top + (h - ((p.total / maxY) * h));
+        return { ...p, x, y };
+      });
+
+      const grade = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      for (let i = 0; i <= 4; i += 1) {
+        const y = top + ((h / 4) * i);
+        const linha = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        linha.setAttribute('x1', left);
+        linha.setAttribute('x2', width - right);
+        linha.setAttribute('y1', y);
+        linha.setAttribute('y2', y);
+        linha.setAttribute('stroke', '#e2e8f0');
+        linha.setAttribute('stroke-width', '1');
+        grade.appendChild(linha);
+      }
+      graficoSvg.appendChild(grade);
+
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      const d = pontos.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
+      path.setAttribute('d', d);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', '#0f70d6');
+      path.setAttribute('stroke-width', '3');
+      graficoSvg.appendChild(path);
+
+      const area = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      const dArea = `${d} L${pontos[pontos.length - 1].x},${height - bottom} L${pontos[0].x},${height - bottom} Z`;
+      area.setAttribute('d', dArea);
+      area.setAttribute('fill', 'rgba(15,112,214,0.14)');
+      graficoSvg.appendChild(area);
+
+      pontos.forEach(ponto => {
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', ponto.x);
+        circle.setAttribute('cy', ponto.y);
+        circle.setAttribute('r', '4.5');
+        circle.setAttribute('fill', '#0f70d6');
+        circle.style.cursor = 'pointer';
+
+        circle.addEventListener('mouseenter', () => {
+          const linhas = [
+            `<strong>${ponto.label}</strong>`,
+            `Total acumulado: ${ponto.total} membros ativos`
+          ];
+
+          if (ponto.ingressos > 0) linhas.push(`+${ponto.ingressos} novos ingressos`);
+          if (ponto.inativacoes > 0) linhas.push(`-${ponto.inativacoes} inativações`);
+
+          tooltipGrafico.innerHTML = linhas.join('<br>');
+          tooltipGrafico.style.display = 'block';
+          tooltipGrafico.style.left = `${Math.max(0, (ponto.x / width) * graficoSvg.clientWidth - 90)}px`;
+          tooltipGrafico.style.top = `${Math.max(0, (ponto.y / height) * graficoSvg.clientHeight - 78)}px`;
+        });
+
+        circle.addEventListener('mouseleave', () => {
+          tooltipGrafico.style.display = 'none';
+        });
+
+        graficoSvg.appendChild(circle);
+
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('x', ponto.x);
+        label.setAttribute('y', height - 12);
+        label.setAttribute('text-anchor', 'middle');
+        label.setAttribute('font-size', '11');
+        label.setAttribute('fill', '#64748b');
+        label.textContent = ponto.label;
+        graficoSvg.appendChild(label);
+      });
+    }
+
+    function calcularDiasProximoAniversario(dataIso) {
+      if (!dataIso) return null;
+      const hoje = new Date();
+      const nascimento = new Date(dataIso + 'T00:00:00');
+      if (Number.isNaN(nascimento.getTime())) return null;
+
+      const prox = new Date(hoje.getFullYear(), nascimento.getMonth(), nascimento.getDate());
+      prox.setHours(0, 0, 0, 0);
+
+      const baseHoje = new Date(hoje);
+      baseHoje.setHours(0, 0, 0, 0);
+
+      if (prox < baseHoje) prox.setFullYear(prox.getFullYear() + 1);
+
+      return Math.round((prox - baseHoje) / (1000 * 60 * 60 * 24));
+    }
+
+    function obterMesBrasilia(data) {
+      const f = new Intl.DateTimeFormat('pt-BR', {
+        timeZone: 'America/Sao_Paulo',
+        month: '2-digit'
+      }).formatToParts(data).find(p => p.type === 'month');
+      return Number(f?.value || 0) - 1;
+    }
+
+    function montarMensagemAniversario(nomeMembro) {
+      return `🎉 Feliz aniversário, ${nomeMembro}! Hoje celebramos a vida que Deus plantou em você - única, preciosa e cheia de propósito. A ${NOME_IGREJA} está ao seu lado, crendo que os melhores anos da sua história ainda estão por vir. Que o Senhor te abençoe e guarde em cada passo deste novo ciclo! 🙏✨`;
+    }
+
+    function abrirWhatsappParabens(membro) {
+      const telefone = (membro.phone || '').replace(/\D/g, '');
+      if (!telefone) {
+        Notificacao.aviso('Membro sem telefone cadastrado para WhatsApp.');
+        return;
+      }
+
+      const numero = telefone.startsWith('55') ? telefone : `55${telefone}`;
+      const mensagem = encodeURIComponent(montarMensagemAniversario(membro.fullName));
+      window.open(`https://wa.me/${numero}?text=${mensagem}`, '_blank');
+    }
+
+    function abrirModalAniversariantes() {
+      const hoje = new Date();
+      const mesAtual = obterMesBrasilia(hoje);
+
+      const aniversariantes = membrosCache
+        .filter(m => m.isActive)
+        .filter(m => {
+          if (!m.birthDate) return false;
+          const d = parseDataISO(m.birthDate);
+          return d && d.getMonth() === mesAtual;
+        })
+        .sort((a, b) => {
+          const da = parseDataISO(a.birthDate);
+          const db = parseDataISO(b.birthDate);
+          return (da?.getDate() || 0) - (db?.getDate() || 0);
+        });
+
+      if (!aniversariantes.length) {
+        listaAniversariantesModal.innerHTML = '<div class="grafico-vazio">Nenhum aniversariante este mês.</div>';
+        abrirModal(modalAniversariantes);
+        return;
+      }
+
+      listaAniversariantesModal.innerHTML = aniversariantes.map(membro => {
+        const d = parseDataISO(membro.birthDate);
+        const diaMes = d ? `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}` : '--/--';
+        return `
+          <div class="aniversariante-item">
+            <div>
+              <strong>${membro.fullName}</strong><br>
+              <span style="font-size:12px;color:#64748b;">${diaMes}</span>
+            </div>
+            <button type="button" class="btn-whatsapp" onclick="enviarParabens('${membro.id}')">Enviar parabéns</button>
+          </div>
+        `;
+      }).join('');
+
+      abrirModal(modalAniversariantes);
+    }
+
+    function renderRankingBairros(membros) {
+      const rankingEl = document.getElementById('rankingBairros');
+      const bairros = membros
+        .map(m => (m.addressNeighborhood || '').trim())
+        .filter(Boolean)
+        .reduce((acc, bairro) => {
+          acc[bairro] = (acc[bairro] || 0) + 1;
+          return acc;
+        }, {});
+
+      const ranking = Object.entries(bairros)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3);
+
+      if (!ranking.length) {
+        rankingEl.innerHTML = '<div style="font-size: var(--fonte-tamanho-sm); color: var(--cor-texto-light);">Sem dados de bairro.</div>';
+        return;
+      }
+
+      const max = ranking[0][1] || 1;
+      rankingEl.innerHTML = ranking.map(([bairro, qtd]) => {
+        const pct = Math.max(8, Math.round((qtd / max) * 100));
+        return `
+          <div class="bairro-item">
+            <div>
+              <strong>${bairro}</strong>
+              <div class="bairro-track"><span class="bairro-fill" style="width:${pct}%"></span></div>
+            </div>
+            <strong>${qtd}</strong>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function montarPrioridades({ inativos, taxaAtivos, mediaCelula, aniversarios30Dias, totalCelulas }) {
+      const prioridades = [];
+
+      if (taxaAtivos < 70) {
+        prioridades.push(`Ativar plano de recuperação para ${inativos} membro(s) inativo(s).`);
+      }
+
+      if (mediaCelula > 12) {
+        prioridades.push(`Alta densidade nas células (${mediaCelula.toFixed(1).replace('.', ',')} por célula). Avaliar abertura de nova célula.`);
+      }
+
+      if (aniversarios30Dias > 0) {
+        prioridades.push(`Organizar contato para ${aniversarios30Dias} aniversariante(s) nos próximos 30 dias.`);
+      }
+
+      if (totalCelulas === 0) {
+        prioridades.push('Nenhuma célula cadastrada. Priorizar estruturação inicial de células.');
+      }
+
+      if (!prioridades.length) {
+        prioridades.push('Indicadores em equilíbrio. Manter rotina de acompanhamento semanal.');
+      }
+
+      return prioridades;
+    }
+
+    async function carregarDados() {
+      try {
+        const [membrosResp, celulasResp] = await Promise.all([
+          MembrosApi.listar(1, 1000),
+          CelulasApi.listar(1, 1000)
+        ]);
+
+        const membros = membrosResp.items || [];
+        membrosCache = membros;
+        const celulas = celulasResp.items || [];
+
+        const ativosLista = membros.filter(m => m.isActive);
+        const totalCadastrados = membros.length;
+        const totalMembros = ativosLista.length;
+        const totalCelulas = celulas.filter(c => {
+          const lid = c.leaderId || c.leader?.id;
+          const lider = membros.find(m => m.id === lid);
+          return lider ? lider.isActive : true;
+        }).length;
+        const ativos = ativosLista.length;
+        const inativos = Math.max(0, totalCadastrados - ativos);
+
+        const mesAtual = obterMesBrasilia(new Date());
+        const aniversariosMes = ativosLista.filter(m => {
+          if (!m.birthDate) return false;
+          const d = new Date(m.birthDate + 'T00:00:00');
+          return d.getMonth() === mesAtual;
+        }).length;
+
+        const aniversarios30Dias = ativosLista.filter(m => {
+          const dias = calcularDiasProximoAniversario(m.birthDate);
+          return dias !== null && dias <= 30;
+        }).length;
+
+        const mediaCelula = totalCelulas > 0 ? (ativos / totalCelulas) : 0;
+        const taxaAtivos = totalMembros > 0 ? Math.round((ativos / totalMembros) * 100) : 0;
+
+        document.getElementById('totalMembros').textContent = totalMembros;
+        document.getElementById('membrosAtivos').textContent = ativos;
+        document.getElementById('totalCelulas').textContent = totalCelulas;
+        document.getElementById('mediaPorCelula').textContent = mediaCelula.toFixed(1).replace('.', ',');
+        document.getElementById('totalAniversariantes').textContent = aniversariosMes;
+        document.getElementById('aniversarios30Dias').textContent = aniversarios30Dias;
+
+        document.getElementById('statAtivos').textContent = ativos;
+        document.getElementById('statInativos').textContent = inativos;
+        document.getElementById('statMediaCelula').textContent = mediaCelula.toFixed(1).replace('.', ',');
+        document.getElementById('statAniversariosMes').textContent = aniversariosMes;
+
+        document.getElementById('taxaAtivosTexto').textContent = `${taxaAtivos}%`;
+        document.getElementById('taxaAtivosBar').style.width = `${taxaAtivos}%`;
+
+        const prioridades = montarPrioridades({
+          inativos,
+          taxaAtivos,
+          mediaCelula,
+          aniversarios30Dias,
+          totalCelulas
+        });
+
+        document.getElementById('listaPrioridades').innerHTML = prioridades
+          .map(item => `<li>${item}</li>`)
+          .join('');
+
+        renderRankingBairros(ativosLista);
+        renderizarGrafico(calcularSerieCrescimento(membros, periodoSelecionado));
+      } catch (erro) {
+        console.error('Erro ao carregar dados:', erro);
+        Notificacao.erro('Erro ao carregar dados do dashboard');
+      }
+    }
+
+    graficoPeriodos.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-periodo]');
+      if (!btn) return;
+
+      periodoSelecionado = btn.getAttribute('data-periodo');
+      document.querySelectorAll('.periodo-btn').forEach(x => x.classList.remove('ativo'));
+      btn.classList.add('ativo');
+
+      if (periodoSelecionado === 'personalizado') {
+        periodoCustomizado.classList.add('ativo');
+      } else {
+        periodoCustomizado.classList.remove('ativo');
+        renderizarGrafico(calcularSerieCrescimento(membrosCache, periodoSelecionado));
+      }
+    });
+
+    btnAplicarPeriodo.addEventListener('click', () => {
+      const serie = calcularSerieCrescimento(membrosCache, 'personalizado');
+      if (!serie.length) {
+        Notificacao.aviso('Período personalizado inválido.');
+        return;
+      }
+      renderizarGrafico(serie);
+    });
+
+    cardCelulasAtivas.addEventListener('click', () => {
+      window.location.href = resolverRotaLocal('/celulas.html');
+    });
+
+    cardCelulasAtivas.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        window.location.href = resolverRotaLocal('/celulas.html');
+      }
+    });
+
+    cardAniversariantesMes.addEventListener('click', abrirModalAniversariantes);
+    cardAniversariantesMes.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        abrirModalAniversariantes();
+      }
+    });
+
+    btnFecharModalAniversariantes.addEventListener('click', () => fecharModal(modalAniversariantes));
+    modalAniversariantes.addEventListener('click', (e) => {
+      if (e.target === modalAniversariantes) fecharModal(modalAniversariantes);
+    });
+
+    window.enviarParabens = (idMembro) => {
+      const membro = membrosCache.find(m => m.id === idMembro);
+      if (!membro) return;
+      abrirWhatsappParabens(membro);
+    };
+
+    carregarDados();
+    setInterval(carregarDados, 30000);
+  </script>
+</body>
+</html>

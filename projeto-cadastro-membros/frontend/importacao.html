@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Importar CSV - Cadastro de Membros</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" type="image/png" href="imagens/IMG_2261.PNG">
+  <style>
+    .importacao-container {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    }
+
+    .importacao-content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: var(--espaco-xl) var(--espaco-md);
+    }
+
+    .importacao-header {
+      display: flex;
+      align-items: center;
+      gap: var(--espaco-md);
+      margin-bottom: var(--espaco-xl);
+      animation: slideDown 0.5s ease-out;
+    }
+
+    .importacao-header-icon {
+      font-size: 36px;
+    }
+
+    .importacao-header h1 {
+      font-size: var(--fonte-tamanho-xl);
+      color: var(--cor-fundo-dark);
+      margin: 0;
+    }
+
+    .importacao-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--espaco-lg);
+      margin-bottom: var(--espaco-2xl);
+    }
+
+    .info-card {
+      background: var(--cor-fundo);
+      border-radius: var(--raio-lg);
+      padding: var(--espaco-lg);
+      box-shadow: var(--sombra-md);
+      border-left: 4px solid var(--cor-primaria);
+      animation: slideUp 0.5s ease-out;
+    }
+
+    .info-card h3 {
+      margin: 0 0 var(--espaco-md) 0;
+      color: var(--cor-fundo-dark);
+      font-size: var(--fonte-tamanho-base);
+    }
+
+    .info-card p {
+      margin: 0;
+      color: var(--cor-texto-light);
+      font-size: var(--fonte-tamanho-sm);
+      line-height: 1.6;
+    }
+
+    .info-card code {
+      background: var(--cor-fundo-alt);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    .upload-area {
+      background: var(--cor-fundo);
+      border-radius: var(--raio-lg);
+      padding: var(--espaco-2xl);
+      box-shadow: var(--sombra-md);
+      animation: slideUp 0.5s ease-out;
+      margin-bottom: var(--espaco-lg);
+    }
+
+    .drop-zone {
+      border: 3px dashed var(--cor-borda);
+      border-radius: var(--raio-lg);
+      padding: var(--espaco-2xl);
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transicao-normal);
+      background: var(--cor-fundo-alt);
+    }
+
+    .drop-zone:hover,
+    .drop-zone.dragover {
+      border-color: var(--cor-primaria);
+      background: var(--cor-primaria-light);
+    }
+
+    .drop-zone-icon {
+      font-size: 48px;
+      margin-bottom: var(--espaco-md);
+    }
+
+    .drop-zone-title {
+      font-size: var(--fonte-tamanho-lg);
+      font-weight: var(--fonte-peso-semibold);
+      color: var(--cor-fundo-dark);
+      margin-bottom: var(--espaco-sm);
+    }
+
+    .drop-zone-desc {
+      color: var(--cor-texto-light);
+      font-size: var(--fonte-tamanho-sm);
+      margin-bottom: 0;
+    }
+
+    #inputArquivo {
+      display: none;
+    }
+
+    .arquivo-selecionado {
+      display: none;
+      background: var(--cor-primaria-light);
+      border-left: 4px solid var(--cor-primaria);
+      padding: var(--espaco-md);
+      border-radius: var(--raio-md);
+      margin-bottom: var(--espaco-lg);
+    }
+
+    .arquivo-selecionado.ativo {
+      display: block;
+    }
+
+    .arquivo-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--espaco-md);
+    }
+
+    .arquivo-detalhes {
+      flex: 1;
+    }
+
+    .arquivo-nome {
+      font-weight: var(--fonte-peso-semibold);
+      color: var(--cor-primaria-dark);
+      margin-bottom: var(--espaco-xs);
+    }
+
+    .arquivo-tamanho {
+      font-size: var(--fonte-tamanho-sm);
+      color: var(--cor-texto-light);
+    }
+
+    .btn-remover-arquivo {
+      padding: var(--espaco-sm) var(--espaco-md);
+      background: var(--cor-erro);
+      color: var(--cor-fundo);
+      border: none;
+      border-radius: var(--raio-md);
+      cursor: pointer;
+      transition: all var(--transicao-rapida);
+      font-weight: var(--fonte-peso-medium);
+      font-size: var(--fonte-tamanho-sm);
+    }
+
+    .btn-remover-arquivo:hover {
+      background: #dc2626;
+    }
+
+    .preview-container {
+      background: var(--cor-fundo);
+      border-radius: var(--raio-lg);
+      padding: var(--espaco-lg);
+      box-shadow: var(--sombra-md);
+      margin-top: var(--espaco-lg);
+      display: none;
+    }
+
+    .preview-container.ativo {
+      display: block;
+    }
+
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--espaco-lg);
+    }
+
+    .preview-titulo {
+      font-size: var(--fonte-tamanho-lg);
+      font-weight: var(--fonte-peso-semibold);
+      color: var(--cor-fundo-dark);
+    }
+
+    .preview-stats {
+      display: flex;
+      gap: var(--espaco-lg);
+      font-size: var(--fonte-tamanho-sm);
+      color: var(--cor-texto-light);
+    }
+
+    .preview-tabela {
+      overflow-x: auto;
+      margin-top: var(--espaco-lg);
+    }
+
+    .preview-tabela table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--fonte-tamanho-sm);
+    }
+
+    .preview-tabela thead {
+      background: var(--cor-fundo-alt);
+    }
+
+    .preview-tabela th {
+      padding: var(--espaco-sm);
+      text-align: left;
+      font-weight: var(--fonte-peso-semibold);
+      border-bottom: 2px solid var(--cor-borda);
+    }
+
+    .preview-tabela td {
+      padding: var(--espaco-sm);
+      border-bottom: 1px solid var(--cor-borda);
+    }
+
+    .preview-tabela tbody tr:nth-child(odd) {
+      background: var(--cor-fundo-alt);
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: var(--fonte-peso-semibold);
+    }
+
+    .status-ok {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .status-erro {
+      background: #fee2e2;
+      color: #7f1d1d;
+    }
+
+    .status-aviso {
+      background: #fef3c7;
+      color: #78350f;
+    }
+
+    .botoes-acao {
+      display: flex;
+      gap: var(--espaco-md);
+      margin-top: var(--espaco-lg);
+      justify-content: flex-end;
+    }
+
+    .btn-importar {
+      padding: var(--espaco-sm) var(--espaco-lg);
+      background: linear-gradient(135deg, var(--cor-sucesso) 0%, #059669 100%);
+      color: var(--cor-fundo);
+      border: none;
+      border-radius: var(--raio-md);
+      font-weight: var(--fonte-peso-semibold);
+      cursor: pointer;
+      transition: all var(--transicao-rapida);
+      display: flex;
+      align-items: center;
+      gap: var(--espaco-sm);
+    }
+
+    .btn-importar:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--sombra-lg);
+    }
+
+    .btn-importar:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .resultado-importacao {
+      background: var(--cor-fundo);
+      border-radius: var(--raio-lg);
+      padding: var(--espaco-lg);
+      box-shadow: var(--sombra-md);
+      margin-top: var(--espaco-lg);
+      display: none;
+      animation: slideUp 0.5s ease-out;
+    }
+
+    .resultado-importacao.ativo {
+      display: block;
+    }
+
+    .resultado-header {
+      display: flex;
+      align-items: center;
+      gap: var(--espaco-md);
+      margin-bottom: var(--espaco-lg);
+    }
+
+    .resultado-icon {
+      font-size: 36px;
+    }
+
+    .resultado-mensagem {
+      font-size: var(--fonte-tamanho-lg);
+      font-weight: var(--fonte-peso-semibold);
+      color: var(--cor-fundo-dark);
+    }
+
+    .resultado-detalhes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: var(--espaco-md);
+      margin-top: var(--espaco-lg);
+    }
+
+    .resultado-item {
+      background: var(--cor-fundo-alt);
+      padding: var(--espaco-md);
+      border-radius: var(--raio-md);
+      text-align: center;
+    }
+
+    .resultado-numero {
+      font-size: var(--fonte-tamanho-xl);
+      font-weight: var(--fonte-peso-bold);
+      color: var(--cor-primaria);
+    }
+
+    .resultado-label {
+      font-size: var(--fonte-tamanho-sm);
+      color: var(--cor-texto-light);
+      margin-top: var(--espaco-xs);
+    }
+
+    .btn-voltar {
+      margin-top: var(--espaco-lg);
+      padding: var(--espaco-sm) var(--espaco-lg);
+      background: var(--cor-fundo-alt);
+      color: var(--cor-texto);
+      border: 1px solid var(--cor-borda);
+      border-radius: var(--raio-md);
+      cursor: pointer;
+      transition: all var(--transicao-rapida);
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-voltar:hover {
+      background: var(--cor-fundo);
+      border-color: var(--cor-primaria);
+    }
+
+    .guia-formato {
+      background: var(--cor-fundo);
+      border-radius: var(--raio-lg);
+      padding: var(--espaco-lg);
+      box-shadow: var(--sombra-md);
+      margin-top: var(--espaco-lg);
+    }
+
+    .guia-formato h3 {
+      margin-top: 0;
+    }
+
+    .formato-tabela {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--fonte-tamanho-sm);
+      margin-top: var(--espaco-md);
+    }
+
+    .formato-tabela th,
+    .formato-tabela td {
+      border: 1px solid var(--cor-borda);
+      padding: var(--espaco-sm);
+      text-align: left;
+    }
+
+    .formato-tabela th {
+      background: var(--cor-fundo-alt);
+      font-weight: var(--fonte-peso-semibold);
+    }
+
+    .formato-exemplo {
+      background: var(--cor-fundo-alt);
+      padding: var(--espaco-md);
+      border-radius: var(--raio-md);
+      margin-top: var(--espaco-md);
+      font-family: monospace;
+      font-size: 12px;
+      overflow-x: auto;
+    }
+
+    @media (max-width: 768px) {
+      .importacao-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .resultado-detalhes {
+        grid-template-columns: 1fr;
+      }
+
+      .botoes-acao {
+        flex-direction: column;
+      }
+
+      .btn-importar {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-content">
+      <a class="navbar-brand" href="/dashboard.html">WAVE</a>
+      <button class="navbar-hamburger" id="btnHamburger" aria-label="Abrir menu" style="display:none">
+        <svg width="28" height="28" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="navbar-menu" id="navbarMenu">
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="/membros.html">Membros</a>
+        <a href="/importacao.html">Importar CSV</a>
+      </div>
+      <div class="navbar-user">
+        <span id="nomeUsuario">Carregando...</span>
+        <button class="btn-logout">Sair</button>
+      </div>
+    </div>
+    <div class="navbar-mobile-overlay" id="navbarMobileOverlay" style="display:none">
+      <div class="navbar-mobile-menu">
+        <button class="navbar-mobile-close" id="btnCloseMobileMenu" aria-label="Fechar menu">✕</button>
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="/membros.html">Membros</a>
+        <a href="/importacao.html">Importar CSV</a>
+      </div>
+    </div>
+    <style>
+      @media (max-width: 900px) {
+        .navbar-menu {
+          display: none !important;
+        }
+        .navbar-hamburger {
+          display: block !important;
+          background: none;
+          border: none;
+          margin-left: auto;
+          cursor: pointer;
+          padding: 6px;
+        }
+        .navbar-mobile-overlay {
+          display: none;
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0,0,0,0.7);
+          z-index: 2000;
+          align-items: flex-start;
+          justify-content: flex-end;
+        }
+        .navbar-mobile-overlay.ativo {
+          display: flex !important;
+        }
+        .navbar-mobile-menu {
+          background: var(--cor-fundo-dark);
+          color: var(--cor-fundo);
+          width: 220px;
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          gap: var(--espaco-lg);
+          padding: var(--espaco-xl) var(--espaco-lg) var(--espaco-lg) var(--espaco-lg);
+          box-shadow: -2px 0 12px rgba(0,0,0,0.2);
+          position: relative;
+        }
+        .navbar-mobile-menu a {
+          color: var(--cor-fundo);
+          font-size: var(--fonte-tamanho-lg);
+          font-weight: var(--fonte-peso-semibold);
+          text-decoration: none;
+          padding: var(--espaco-md) 0;
+          border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .navbar-mobile-close {
+          position: absolute;
+          top: var(--espaco-md);
+          right: var(--espaco-md);
+          background: none;
+          border: none;
+          color: var(--cor-fundo);
+          font-size: 28px;
+          cursor: pointer;
+        }
+      }
+    </style>
+    <script>
+      // Menu hambúrguer mobile
+      const btnHamburger = document.getElementById('btnHamburger');
+      const navbarMobileOverlay = document.getElementById('navbarMobileOverlay');
+      const btnCloseMobileMenu = document.getElementById('btnCloseMobileMenu');
+      function abrirMenuMobile() {
+        navbarMobileOverlay.classList.add('ativo');
+        navbarMobileOverlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+      function fecharMenuMobile() {
+        navbarMobileOverlay.classList.remove('ativo');
+        navbarMobileOverlay.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+      btnHamburger.addEventListener('click', abrirMenuMobile);
+      btnCloseMobileMenu.addEventListener('click', fecharMenuMobile);
+      navbarMobileOverlay.addEventListener('click', function(e) {
+        if (e.target === navbarMobileOverlay) fecharMenuMobile();
+      });
+      // Mostrar botão só no mobile
+      function toggleHamburger() {
+        if (window.innerWidth <= 900) {
+          btnHamburger.style.display = 'block';
+        } else {
+          btnHamburger.style.display = 'none';
+          fecharMenuMobile();
+        }
+      }
+      window.addEventListener('resize', toggleHamburger);
+      toggleHamburger();
+    </script>
+  </nav>
+
+  <div class="importacao-container">
+    <div class="importacao-content">
+      <div class="importacao-header">
+        <div class="importacao-header-icon">CSV</div>
+        <h1>Importar CSV</h1>
+      </div>
+
+      <div class="importacao-cards">
+        <div class="info-card">
+          <h3>Formato</h3>
+          <p>Arquivo CSV com cabeçalho na primeira linha. Use separador <code>,</code> (vírgula).</p>
+        </div>
+        <div class="info-card">
+          <h3>Validação</h3>
+          <p>Dados serão validados antes de importar. Erros serão exibidos para correção.</p>
+        </div>
+        <div class="info-card">
+          <h3>Processamento</h3>
+          <p>Importação em lote com rollback automático se houver erros críticos.</p>
+        </div>
+      </div>
+
+      <div class="upload-area">
+        <div class="drop-zone" id="dropZone">
+          <div class="drop-zone-icon">CSV</div>
+          <div class="drop-zone-title">Arraste o arquivo aqui</div>
+          <div class="drop-zone-desc">ou clique para selecionar um arquivo CSV</div>
+          <input type="file" id="inputArquivo" accept=".csv" required>
+        </div>
+
+        <div class="arquivo-selecionado" id="arquivoSelecionado">
+          <div class="arquivo-info">
+            <div class="arquivo-detalhes">
+              <div class="arquivo-nome" id="nomeArquivo"></div>
+              <div class="arquivo-tamanho" id="tamanhoArquivo"></div>
+            </div>
+            <button type="button" class="btn-remover-arquivo" id="btnRemover">Remover</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="preview-container" id="previewContainer">
+        <div class="preview-header">
+          <div class="preview-titulo">Prévia dos Dados</div>
+          <div class="preview-stats">
+            <span><strong id="totalLinhas">0</strong> linhas</span>
+            <span id="errosIndicador" style="display: none;"><strong id="totalErros">0</strong> erros</span>
+          </div>
+        </div>
+
+        <div class="preview-tabela" id="previewTabela"></div>
+
+        <div class="botoes-acao">
+          <button type="button" class="btn-importar" id="btnImportar">
+            <span class="loading-spinner" id="spinnerImportar"></span>
+            <span id="textoImportar">Importar Agora</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="resultado-importacao" id="resultadoImportacao">
+        <div class="resultado-header">
+          <div class="resultado-icon" id="iconResultado">OK</div>
+          <div>
+            <div class="resultado-mensagem" id="msgResultado">Importação concluída!</div>
+            <div style="color: var(--cor-texto-light); font-size: var(--fonte-tamanho-sm);" id="subMsgResultado"></div>
+          </div>
+        </div>
+
+        <div class="resultado-detalhes" id="detalhesResultado"></div>
+
+        <div>
+          <a href="/membros.html" class="btn-voltar">← Voltar para Membros</a>
+        </div>
+      </div>
+
+      <div class="guia-formato">
+        <h3>Guia de Formato</h3>
+        <p>Seu arquivo CSV deve conter as seguintes colunas (com estes nomes):</p>
+        <table class="formato-tabela">
+          <thead>
+            <tr>
+              <th>Coluna</th>
+              <th>Tipo</th>
+              <th>Obrigatório</th>
+              <th>Formato</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Nome completo</strong></td>
+              <td>Texto</td>
+              <td>Sim</td>
+              <td>Máx 150 caracteres</td>
+            </tr>
+            <tr>
+              <td><strong>Telefone</strong></td>
+              <td>Texto</td>
+              <td>Sim</td>
+              <td>11 dígitos (com ou sem máscara)</td>
+            </tr>
+            <tr>
+              <td><strong>Data de nascimento</strong></td>
+              <td>Data</td>
+              <td>Sim</td>
+              <td>DD/MM/AAAA</td>
+            </tr>
+            <tr>
+              <td><strong>Data de ingresso</strong></td>
+              <td>Data</td>
+              <td>Sim</td>
+              <td>DD/MM/AAAA</td>
+            </tr>
+            <tr>
+              <td><strong>Tipo de ingresso</strong></td>
+              <td>Texto</td>
+              <td>Sim</td>
+              <td>Batismo ou Recepção</td>
+            </tr>
+            <tr>
+              <td><strong>Rua</strong></td>
+              <td>Texto</td>
+              <td>Sim</td>
+              <td>Endereço residencial</td>
+            </tr>
+            <tr>
+              <td><strong>Número</strong></td>
+              <td>Texto</td>
+              <td>Sim</td>
+              <td>Número residencial</td>
+            </tr>
+            <tr>
+              <td><strong>Complemento</strong></td>
+              <td>Texto</td>
+              <td>Não</td>
+              <td>Opcional</td>
+            </tr>
+            <tr>
+              <td><strong>Bairro</strong></td>
+              <td>Texto</td>
+              <td>Sim</td>
+              <td>Residencial</td>
+            </tr>
+            <tr>
+              <td><strong>Cidade</strong></td>
+              <td>Texto</td>
+              <td>Sim</td>
+              <td>Residencial</td>
+            </tr>
+            <tr>
+              <td><strong>É líder de célula</strong></td>
+              <td>Texto</td>
+              <td>Sim</td>
+              <td>Sim ou Não</td>
+            </tr>
+            <tr>
+              <td><strong>Dia da célula / Horário da célula / Tipos da célula</strong></td>
+              <td>Texto</td>
+              <td>Sim se líder</td>
+              <td>Ex.: Quarta / 19:30 / Adulto,Teens</td>
+            </tr>
+            <tr>
+              <td><strong>Endereço da célula (Rua, Número, Complemento, Bairro, Cidade)</strong></td>
+              <td>Texto</td>
+              <td>Sim se líder</td>
+              <td>Pode usar "mesmo" para copiar residencial</td>
+            </tr>
+            <tr>
+              <td><strong>Nome do líder (discipulado por)</strong></td>
+              <td>Texto</td>
+              <td>Sim</td>
+              <td>Nome de líder existente no sistema/arquivo</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="formato-exemplo">
+Nome completo,Telefone,Data de nascimento,Data de ingresso,Tipo de ingresso,Rua,Número,Complemento,Bairro,Cidade,É líder de célula,Número da célula,Dia da célula,Horário da célula,Tipos da célula,Endereço da célula - Rua,Endereço da célula - Número,Endereço da célula - Complemento,Endereço da célula - Bairro,Endereço da célula - Cidade,Nome do líder (discipulado por)
+EXEMPLO - Carlos Souza,(11) 99876-5432,12/03/1990,15/04/2026,Batismo,Rua das Flores,123,,Jardim América,Mandaguari - PR,Sim,1,Quarta,19:30,Adulto,mesmo,mesmo,,mesmo,mesmo,Pr. Daniel Rocha
+Ana Paula Ferreira,(11) 99777-6666,22/08/1995,03/02/2025,Recepção,Rua Aurora,45,Apto 3,Santana,Mandaguari - PR,Não,,,,,,,,,,Pr. Daniel Rocha
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/utils.js"></script>
+  <script>
+    if (!protegerRota()) throw new Error('Não autenticado');
+
+    const dropZone = DOM.obter('#dropZone');
+    const inputArquivo = DOM.obter('#inputArquivo');
+    const arquivoSelecionado = DOM.obter('#arquivoSelecionado');
+    const btnRemover = DOM.obter('#btnRemover');
+    const previewContainer = DOM.obter('#previewContainer');
+    const btnImportar = DOM.obter('#btnImportar');
+    const spinnerImportar = DOM.obter('#spinnerImportar');
+    const textoImportar = DOM.obter('#textoImportar');
+    const resultadoImportacao = DOM.obter('#resultadoImportacao');
+    let arquivoSelecionadoAtual = null;
+    let dadosCSV = [];
+
+    // Drag and drop
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove('dragover');
+      
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        inputArquivo.files = files;
+        processarArquivo(files[0]);
+      }
+    });
+
+    dropZone.addEventListener('click', () => inputArquivo.click());
+
+    inputArquivo.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        processarArquivo(e.target.files[0]);
+      }
+    });
+
+    btnRemover.addEventListener('click', () => {
+      arquivoSelecionadoAtual = null;
+      inputArquivo.value = '';
+      DOM.ocultar(arquivoSelecionado);
+      DOM.ocultar(previewContainer);
+      DOM.limpar(previewContainer);
+    });
+
+    function processarArquivo(arquivo) {
+      if (!arquivo.name.endsWith('.csv')) {
+        Notificacao.erro('Selecione um arquivo CSV válido');
+        return;
+      }
+
+      arquivoSelecionadoAtual = arquivo;
+      DOM.obter('#nomeArquivo').textContent = arquivo.name;
+      DOM.obter('#tamanhoArquivo').textContent = `${(arquivo.size / 1024).toFixed(2)} KB`;
+      DOM.mostrar(arquivoSelecionado);
+
+      // Ler e processar CSV
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const csv = e.target.result;
+          dadosCSV = parseCSV(csv);
+          exibirPreview(dadosCSV);
+        } catch (erro) {
+          Notificacao.erro('Erro ao processar arquivo: ' + erro.message);
+          console.error(erro);
+        }
+      };
+      reader.readAsText(arquivo);
+    }
+
+    function normalizarChave(chave) {
+      return (chave || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+    }
+
+    function parseDataBr(dataTexto) {
+      const match = /^([0-3]\d)\/([01]\d)\/(\d{4})$/.exec((dataTexto || '').trim());
+      if (!match) return null;
+      const [, dd, mm, yyyy] = match;
+      const data = new Date(`${yyyy}-${mm}-${dd}T00:00:00`);
+      if (Number.isNaN(data.getTime())) return null;
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function extrairTipos(texto) {
+      return (texto || '')
+        .split(',')
+        .map(x => x.trim())
+        .filter(Boolean);
+    }
+
+    function parseLinhaCsv(linha) {
+      const valores = [];
+      let atual = '';
+      let emAspas = false;
+
+      for (let i = 0; i < linha.length; i++) {
+        const ch = linha[i];
+        const prox = linha[i + 1];
+
+        if (ch === '"') {
+          if (emAspas && prox === '"') {
+            atual += '"';
+            i++;
+          } else {
+            emAspas = !emAspas;
+          }
+          continue;
+        }
+
+        if (ch === ',' && !emAspas) {
+          valores.push(atual.trim());
+          atual = '';
+          continue;
+        }
+
+        atual += ch;
+      }
+
+      valores.push(atual.trim());
+      return valores;
+    }
+
+    function parseCSV(csv) {
+      const linhas = csv.trim().split('\n').map(x => x.replace(/\r$/, ''));
+      if (linhas.length < 2) {
+        throw new Error('Arquivo vazio ou sem dados');
+      }
+
+      const cabecalhoOriginal = parseLinhaCsv(linhas[0]);
+      const colunas = cabecalhoOriginal.map(normalizarChave);
+      const dados = [];
+      const chavesDuplicidade = new Set();
+
+      for (let i = 1; i < linhas.length; i++) {
+        const valores = parseLinhaCsv(linhas[i]);
+        if (!valores.some(Boolean)) continue;
+        if ((valores[0] || '').toUpperCase().includes('EXEMPLO')) continue;
+
+        const bruto = {};
+        colunas.forEach((col, idx) => {
+          bruto[col] = valores[idx] || '';
+        });
+
+        const normalizada = {
+          linhaArquivo: i + 1,
+          nomeCompleto: bruto['nome completo'] || bruto['fullname'] || '',
+          telefone: bruto['telefone'] || bruto['phone'] || '',
+          dataNascimentoTexto: bruto['data de nascimento'] || bruto['birthdate'] || '',
+          dataIngressoTexto: bruto['data de ingresso'] || '',
+          tipoIngresso: bruto['tipo de ingresso'] || '',
+          rua: bruto['rua'] || bruto['addressstreet'] || '',
+          numero: bruto['numero'] || bruto['número'] || '',
+          complemento: bruto['complemento'] || '',
+          bairro: bruto['bairro'] || bruto['addressneighborhood'] || '',
+          cidade: bruto['cidade'] || bruto['addresscity'] || '',
+          ehLiderCelula: (bruto['e lider de celula'] || bruto['é líder de célula'] || '').toLowerCase(),
+          numeroCelula: bruto['numero da celula'] || bruto['número da célula'] || '',
+          diaCelula: bruto['dia da celula'] || '',
+          horarioCelula: bruto['horario da celula'] || bruto['horário da célula'] || '',
+          tiposCelulaTexto: bruto['tipos da celula'] || '',
+          celulaRua: bruto['endereco da celula - rua'] || bruto['endereço da célula - rua'] || '',
+          celulaNumero: bruto['endereco da celula - numero'] || bruto['endereço da célula - número'] || '',
+          celulaComplemento: bruto['endereco da celula - complemento'] || bruto['endereço da célula - complemento'] || '',
+          celulaBairro: bruto['endereco da celula - bairro'] || bruto['endereço da célula - bairro'] || '',
+          celulaCidade: bruto['endereco da celula - cidade'] || bruto['endereço da célula - cidade'] || '',
+          liderDiscipulado: bruto['nome do lider (discipulado por)'] || bruto['nome do líder (discipulado por)'] || bruto['leadername'] || ''
+        };
+
+        normalizada.dataNascimento = parseDataBr(normalizada.dataNascimentoTexto);
+        normalizada.dataIngresso = parseDataBr(normalizada.dataIngressoTexto);
+        normalizada.tiposCelula = extrairTipos(normalizada.tiposCelulaTexto);
+        normalizada.validacao = validarLinha(normalizada, chavesDuplicidade);
+        dados.push(normalizada);
+      }
+
+      return dados;
+    }
+
+    function validarLinha(linha, chavesDuplicidade) {
+      const erros = [];
+      const hojeIso = new Date().toISOString().slice(0, 10);
+      const tiposValidos = new Set(['Kids', 'Teens', 'Adolescente', 'Adulto']);
+
+      const tipoIngressoNormalizado = (linha.tipoIngresso || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const ehLiderNormalizado = (linha.ehLiderCelula || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const eLider = ehLiderNormalizado === 'sim';
+
+      if (!linha.nomeCompleto || linha.nomeCompleto.length < 3) {
+        erros.push('Nome obrigatório (mín 3 caracteres)');
+      }
+
+      if (!linha.telefone || !Validador.telefone(linha.telefone)) {
+        erros.push('Telefone obrigatório e válido (10-11 dígitos)');
+      }
+
+      if (!linha.dataNascimentoTexto) {
+        erros.push('Data nascimento obrigatória');
+      } else if (!linha.dataNascimento) {
+        erros.push('Data nascimento inválida (use DD/MM/AAAA)');
+      } else if (linha.dataNascimento > hojeIso) {
+        erros.push('Data de nascimento não pode ser futura');
+      }
+
+      if (!linha.dataIngressoTexto) {
+        erros.push('Data ingresso obrigatória');
+      } else if (!linha.dataIngresso) {
+        erros.push('Data ingresso inválida (use DD/MM/AAAA)');
+      } else if (linha.dataIngresso > hojeIso) {
+        erros.push('Data de ingresso não pode ser futura');
+      }
+
+      if (tipoIngressoNormalizado !== 'batismo' && tipoIngressoNormalizado !== 'recepcao') {
+        erros.push('Tipo de ingresso deve ser Batismo ou Recepção');
+      }
+
+      if (!linha.rua || !linha.numero || !linha.bairro || !linha.cidade) {
+        erros.push('Endereço residencial incompleto');
+      }
+
+      if (ehLiderNormalizado !== 'sim' && ehLiderNormalizado !== 'nao') {
+        erros.push('É líder de célula deve ser Sim ou Não');
+      }
+
+      if (!linha.liderDiscipulado) {
+        erros.push('Nome do líder obrigatório');
+      }
+
+      if (eLider) {
+        if (!linha.numeroCelula || !linha.diaCelula || !linha.horarioCelula) {
+          erros.push('Líder exige número, dia e horário da célula');
+        }
+        if (!linha.tiposCelula.length) {
+          erros.push('Líder exige ao menos um tipo de célula');
+        } else if (linha.tiposCelula.some(tipo => !tiposValidos.has(tipo))) {
+          erros.push('Tipos da célula inválidos (use Kids, Teens, Adolescente, Adulto)');
+        }
+
+        const usarMesmo = (valor) => (valor || '').toLowerCase() === 'mesmo';
+        if (!linha.celulaRua || !linha.celulaNumero || !linha.celulaBairro || !linha.celulaCidade) {
+          erros.push('Líder exige endereço completo da célula');
+        } else {
+          if (usarMesmo(linha.celulaRua)) linha.celulaRua = linha.rua;
+          if (usarMesmo(linha.celulaNumero)) linha.celulaNumero = linha.numero;
+          if (usarMesmo(linha.celulaBairro)) linha.celulaBairro = linha.bairro;
+          if (usarMesmo(linha.celulaCidade)) linha.celulaCidade = linha.cidade;
+          if (usarMesmo(linha.celulaComplemento)) linha.celulaComplemento = linha.complemento;
+        }
+      }
+
+      const chaveDup = `${(linha.nomeCompleto || '').toLowerCase()}|${linha.dataNascimento || ''}`;
+      if (chavesDuplicidade.has(chaveDup)) {
+        erros.push('Possível duplicata no arquivo (nome + data nascimento)');
+      } else {
+        chavesDuplicidade.add(chaveDup);
+      }
+
+      return {
+        valido: erros.length === 0,
+        erros
+      };
+    }
+
+    function exibirPreview(dados) {
+      const tabela = DOM.obter('#previewTabela');
+      DOM.limpar(tabela);
+
+      const totalErros = dados.filter(d => !d.validacao.valido).length;
+      const totalValidas = dados.length - totalErros;
+      DOM.obter('#totalLinhas').textContent = dados.length;
+
+      if (totalErros > 0) {
+        DOM.mostrar(DOM.obter('#errosIndicador'));
+        DOM.obter('#totalErros').textContent = totalErros;
+      }
+
+      const html = `
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+          <thead>
+            <tr style="background: var(--cor-fundo-alt);">
+              <th style="padding: var(--espaco-sm); text-align: left; border: 1px solid var(--cor-borda);">Status</th>
+              <th style="padding: var(--espaco-sm); text-align: left; border: 1px solid var(--cor-borda);">Nome</th>
+              <th style="padding: var(--espaco-sm); text-align: left; border: 1px solid var(--cor-borda);">Nasc.</th>
+              <th style="padding: var(--espaco-sm); text-align: left; border: 1px solid var(--cor-borda);">Ingresso</th>
+              <th style="padding: var(--espaco-sm); text-align: left; border: 1px solid var(--cor-borda);">Líder</th>
+              <th style="padding: var(--espaco-sm); text-align: left; border: 1px solid var(--cor-borda);">É líder?</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${dados.slice(0, 10).map(d => `
+              <tr>
+                <td style="padding: var(--espaco-sm); border: 1px solid var(--cor-borda);">
+                  ${d.validacao.valido 
+                    ? '<span class="status-badge status-ok">OK</span>' 
+                    : '<span class="status-badge status-erro" title="' + d.validacao.erros.join(', ')
+                    + '">ERRO</span>'
+                  }
+                </td>
+                <td style="padding: var(--espaco-sm); border: 1px solid var(--cor-borda);">${d.nomeCompleto}</td>
+                <td style="padding: var(--espaco-sm); border: 1px solid var(--cor-borda);">${d.dataNascimentoTexto}</td>
+                <td style="padding: var(--espaco-sm); border: 1px solid var(--cor-borda);">${d.dataIngressoTexto}</td>
+                <td style="padding: var(--espaco-sm); border: 1px solid var(--cor-borda);">${d.liderDiscipulado || '—'}</td>
+                <td style="padding: var(--espaco-sm); border: 1px solid var(--cor-borda);">${d.ehLiderCelula || '—'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        ${dados.length > 10 ? `<p style="margin-top: var(--espaco-md); color: var(--cor-texto-light); font-size: var(--fonte-tamanho-sm);">... e ${dados.length - 10} registros adicionais</p>` : ''}
+      `;
+
+      tabela.innerHTML = html;
+      DOM.mostrar(previewContainer);
+
+      if (totalValidas > 0) {
+        DOM.habilitarBotao(btnImportar);
+      } else {
+        DOM.desabilitarBotao(btnImportar);
+      }
+
+      if (totalErros > 0) {
+        Notificacao.aviso(`${totalErros} linha(s) com erro. Você pode importar apenas as válidas.`);
+      }
+    }
+
+    btnImportar.addEventListener('click', async () => {
+      const linhasValidas = dadosCSV.filter(d => d.validacao.valido);
+      
+      if (linhasValidas.length === 0) {
+        Notificacao.erro('Nenhuma linha válida para importar');
+        return;
+      }
+
+      try {
+        DOM.desabilitarBotao(btnImportar);
+        spinnerImportar.style.display = 'flex';
+        textoImportar.textContent = 'Importando...';
+
+        const membrosSistema = await MembrosApi.listar(1, 1000, {});
+        const mapaPorNome = new Map((membrosSistema.items || []).map(m => [(m.fullName || '').toLowerCase(), m]));
+        const novosMembrosCriados = [];
+        const linhasLideres = linhasValidas.filter(x => (x.ehLiderCelula || '').toLowerCase() === 'sim');
+        const linhasComuns = linhasValidas.filter(x => (x.ehLiderCelula || '').toLowerCase() !== 'sim');
+
+        for (const linha of linhasLideres) {
+          const nomeLiderRef = (linha.liderDiscipulado || '').toLowerCase();
+          const liderRef = mapaPorNome.get(nomeLiderRef);
+          if (!liderRef) {
+            continue;
+          }
+
+          const membroCriado = await MembrosApi.criar({
+            fullName: linha.nomeCompleto,
+            birthDate: linha.dataNascimento,
+            joinDate: linha.dataIngresso,
+            joinType: linha.tipoIngresso,
+            phone: linha.telefone,
+            email: null,
+            addressStreet: linha.rua,
+            addressNumber: linha.numero,
+            addressComplement: linha.complemento || null,
+            addressNeighborhood: linha.bairro,
+            addressCity: linha.cidade,
+            leaderId: liderRef.id,
+            category: linha.tiposCelula[0] || 'Adulto',
+            isCellLeader: true
+          });
+
+          mapaPorNome.set((membroCriado.fullName || '').toLowerCase(), membroCriado);
+          novosMembrosCriados.push(membroCriado);
+
+          const mapaDia = {
+            domingo: 0,
+            segunda: 1,
+            terca: 2,
+            terça: 2,
+            quarta: 3,
+            quinta: 4,
+            sexta: 5,
+            sabado: 6,
+            sábado: 6
+          };
+
+          const celulaCriada = await CelulasApi.criar({
+            name: `${linha.nomeCompleto} - Célula ${linha.numeroCelula || 1}`,
+            audience: 'todas',
+            meetingDay: mapaDia[(linha.diaCelula || '').toLowerCase()] ?? 1,
+            meetingTime: `${linha.horarioCelula}:00`,
+            neighborhood: linha.celulaBairro,
+            city: linha.celulaCidade,
+            street: linha.celulaRua,
+            number: linha.celulaNumero,
+            complement: linha.celulaComplemento || null,
+            types: linha.tiposCelula,
+            leaderId: membroCriado.id
+          });
+
+          await MembrosApi.atualizar(membroCriado.id, { cellId: celulaCriada.id });
+        }
+
+        for (const linha of linhasComuns) {
+          const nomeLiderRef = (linha.liderDiscipulado || '').toLowerCase();
+          const liderRef = mapaPorNome.get(nomeLiderRef);
+          if (!liderRef) {
+            continue;
+          }
+
+          await MembrosApi.criar({
+            fullName: linha.nomeCompleto,
+            birthDate: linha.dataNascimento,
+            joinDate: linha.dataIngresso,
+            joinType: linha.tipoIngresso,
+            phone: linha.telefone,
+            email: null,
+            addressStreet: linha.rua,
+            addressNumber: linha.numero,
+            addressComplement: linha.complemento || null,
+            addressNeighborhood: linha.bairro,
+            addressCity: linha.cidade,
+            leaderId: liderRef.id,
+            category: 'Adulto',
+            isCellLeader: false
+          });
+        }
+
+        // Mostrar resultado
+        DOM.mostrar(resultadoImportacao);
+        DOM.obter('#iconResultado').textContent = 'OK';
+        DOM.obter('#msgResultado').textContent = 'Importação concluída com sucesso!';
+        DOM.obter('#subMsgResultado').textContent = `${linhasValidas.length} membro(s) foi/foram importados`;
+
+        const detalhes = DOM.obter('#detalhesResultado');
+        DOM.limpar(detalhes);
+        detalhes.innerHTML = `
+          <div class="resultado-item">
+            <div class="resultado-numero">${linhasValidas.length}</div>
+            <div class="resultado-label">Importados</div>
+          </div>
+          <div class="resultado-item">
+            <div class="resultado-numero">${dadosCSV.length - linhasValidas.length}</div>
+            <div class="resultado-label">Erros</div>
+          </div>
+        `;
+
+        Notificacao.sucesso('Membros importados com sucesso!');
+
+      } catch (erro) {
+        console.error('Erro ao importar:', erro);
+        Notificacao.erro('Erro ao importar arquivo');
+      } finally {
+        spinnerImportar.style.display = 'none';
+        textoImportar.textContent = 'Importar Agora';
+        DOM.habilitarBotao(btnImportar);
+      }
+    });
+  </script>
+</body>
+</html>
