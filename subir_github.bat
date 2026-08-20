@@ -20,7 +20,7 @@ git commit -m "Upload completo do projeto Gestao Celula Wave"
 
 echo.
 echo Enviando para o GitHub (branch main)...
-git push -u origin main
+git push -u origin main --force
 
 echo.
 echo ==========================================
