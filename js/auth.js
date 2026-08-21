@@ -59,6 +59,9 @@ window.WaveAuth = {
 
     // Validação Estrita e Dinâmica via Banco Supabase
     try {
+      if (window.supabaseInitPromise) {
+        await window.supabaseInitPromise;
+      }
       if (window.supabaseClient) {
         const queryPromise = supabaseClient
           .from('usuarios')

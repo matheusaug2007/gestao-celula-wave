@@ -507,7 +507,9 @@ WavePages['admin-lideres'] = {
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
                           <strong style="color:var(--white);">Célula ${i + 1} — ${c.finalidade}</strong>
                           <div style="display:flex;align-items:center;gap:6px;">
-                            <span class="badge badge-white" style="font-size:0.65rem;">${c.faixaEtaria || 'Adulto'}</span>
+                            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                              ${WaveData.renderFaixaEtariaBadges(c.faixaEtaria, 'font-size:0.65rem;')}
+                            </div>
                             <button type="button" class="btn btn-ghost" onclick="WavePages['admin-lideres'].fecharCelulaIndividualClick('${l.id}', '${c.id}')" style="color:var(--danger);font-size:0.7rem;padding:2px 6px;height:auto;min-height:unset;" title="Fechar/Encerrar esta Célula (Ponto 20)">
                               <i data-lucide="x-circle" style="width:12px;height:12px;"></i> Fechar
                             </button>
@@ -594,11 +596,13 @@ WavePages['admin-lideres'] = {
 
             <!-- Dados da Célula Individual (Ponto 1: 1 linha/card por célula) -->
             <div style="background:var(--bg-elevated);border-radius:var(--radius-md);padding:10px 14px;border:1px solid var(--border-subtle);display:flex;flex-direction:column;gap:6px;margin-bottom:var(--space-md);font-size:0.82rem;">
-              <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
                 <span class="badge ${c.finalidade === 'Liderança' ? 'badge-warning' : 'badge-white'}" style="font-size:0.75rem;font-weight:700;">
                   ${c.finalidade}
                 </span>
-                <span class="badge badge-white" style="font-size:0.7rem;">${WaveData.formatFaixaEtaria(c.faixaEtaria)}</span>
+                <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
+                  ${WaveData.renderFaixaEtariaBadges(c.faixaEtaria, 'font-size:0.7rem;')}
+                </div>
               </div>
               
               <div style="color:var(--white);font-weight:600;font-size:0.85rem;margin-top:2px;">
@@ -650,8 +654,9 @@ WavePages['admin-lideres'] = {
                 <span style="font-size:0.7rem;">👑</span>
                 <span class="badge ${c.finalidade === 'Liderança' ? 'badge-warning' : 'badge-white'}" style="font-size:0.6rem;padding:1px 4px;">${c.finalidade}</span>
               </div>
-              <div style="font-size:0.72rem;color:var(--text-tertiary);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                ${c.diaSemana} às ${c.horario} (${WaveData.formatFaixaEtaria(c.faixaEtaria)}) · ${c.liderBairro || 'Mandaguari'}
+              <div style="display:flex;align-items:center;gap:4px;margin-top:4px;flex-wrap:wrap;">
+                <span style="font-size:0.72rem;color:var(--text-tertiary);margin-right:2px;">${c.diaSemana} às ${c.horario} ·</span>
+                ${WaveData.renderFaixaEtariaBadges(c.faixaEtaria, 'font-size:0.62rem;padding:1px 6px;')}
               </div>
             </div>
           </div>

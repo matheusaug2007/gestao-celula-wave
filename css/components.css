@@ -240,6 +240,59 @@
   color: var(--danger);
 }
 
+/* ── Tags de Faixa Etária ── */
+.badge-faixa-teens {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+.badge-faixa-adolescente {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38BDF8;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+.badge-faixa-jovem-adulto {
+  background: rgba(239, 68, 68, 0.15);
+  color: #F87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+.badge-faixa-kids {
+  background: rgba(245, 158, 11, 0.15);
+  color: #FBBF24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+.badge-faixa-adulto {
+  background: rgba(168, 85, 247, 0.15);
+  color: #C084FC;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+}
+
+[data-theme="light"] .badge-faixa-teens {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+[data-theme="light"] .badge-faixa-adolescente {
+  background: rgba(14, 165, 233, 0.12);
+  color: #0284C7;
+  border: 1px solid rgba(14, 165, 233, 0.3);
+}
+[data-theme="light"] .badge-faixa-jovem-adulto {
+  background: rgba(239, 68, 68, 0.12);
+  color: #DC2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+[data-theme="light"] .badge-faixa-kids {
+  background: rgba(245, 158, 11, 0.12);
+  color: #D97706;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+[data-theme="light"] .badge-faixa-adulto {
+  background: rgba(168, 85, 247, 0.12);
+  color: #7E22CE;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
 .tag {
   display: inline-flex;
   align-items: center;

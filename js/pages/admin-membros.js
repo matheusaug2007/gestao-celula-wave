@@ -740,9 +740,11 @@ WavePages['admin-membros'] = {
                       <div style="display:flex;flex-direction:column;gap:8px;">
                         ${m.celulas.map((c, i) => `
                           <div style="padding:8px;background:var(--bg-card);border-radius:var(--radius-sm);font-size:0.8rem;border:1px solid var(--border-subtle);">
-                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:6px;">
                               <strong style="color:var(--white);">Célula ${i + 1} — ${c.finalidade}</strong>
-                              <span class="badge badge-white" style="font-size:0.65rem;">${WaveData.formatFaixaEtaria(c.faixaEtaria)}</span>
+                              <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
+                                ${WaveData.renderFaixaEtariaBadges(c.faixaEtaria, 'font-size:0.65rem;')}
+                              </div>
                             </div>
                             <div style="color:var(--text-secondary);font-size:0.75rem;">
                               📅 <strong>${c.diaSemana}</strong> às <strong>${c.horario}</strong>

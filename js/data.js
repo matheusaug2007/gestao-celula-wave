@@ -66,6 +66,26 @@ window.WaveData = {
     return arr.join(' · ');
   },
 
+  getFaixaBadgeClass(faixaItem) {
+    const norm = this.normalizarFaixaEtariaItem(faixaItem);
+    switch (norm) {
+      case 'Teens': return 'badge-faixa-teens';
+      case 'Adolescente': return 'badge-faixa-adolescente';
+      case 'Jovem Adulto': return 'badge-faixa-jovem-adulto';
+      case 'Kids': return 'badge-faixa-kids';
+      case 'Adulto':
+      default: return 'badge-faixa-adulto';
+    }
+  },
+
+  renderFaixaEtariaBadges(faixa, extraStyle = '') {
+    const arr = this.getFaixasArray(faixa);
+    return arr.map(f => {
+      const cls = this.getFaixaBadgeClass(f);
+      return `<span class="badge ${cls}" style="${extraStyle}">${f}</span>`;
+    }).join('');
+  },
+
   celulaContemFaixa(c, faixaAlvo) {
     if (!faixaAlvo || faixaAlvo === 'todos') return true;
     const faixas = this.getFaixasArray(c.faixaEtaria);

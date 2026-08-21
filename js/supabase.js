@@ -1,29 +1,61 @@
 /* ============================================
-   WAVE CÉLULAS — Conexão Direta com Banco de Dados Supabase
-   Project Ref: dkdtgdmcmvofolukynri
+   WAVE CÉLULAS — Conexão Segura com Supabase via Netlify Cloud
    ============================================ */
-
-const SUPABASE_URL = 'https://dkdtgdmcmvofolukynri.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrZHRnZG1jbXZvZm9sdWt5bnJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2MTU5NjYsImV4cCI6MjEwMjE5MTk2Nn0.Ond6uL_hhHjuDm_xdNn6PsPB2q6Gw_JgDdO45tAeT5c';
 
 window.supabaseClient = null;
 
-(function initSupabase() {
-  if (typeof supabase !== 'undefined' && supabase.createClient) {
-    window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  } else {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-    script.onload = () => {
-      if (window.supabase && window.supabase.createClient) {
-        window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log('✅ Supabase Client conectado com sucesso!');
-        if (window.WaveData && window.WaveData.syncSupabase) {
-          window.WaveData.syncSupabase();
-        }
+// Inicialização assíncrona segura através de variáveis de ambiente do Netlify
+window.supabaseInitPromise = (async function initSupabase() {
+  try {
+    // 1. Garante que o SDK do Supabase está carregado
+    if (typeof supabase === 'undefined' || !supabase.createClient) {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    // 2. Busca as credenciais seguras da Netlify Function (sem expor no código)
+    let url = '';
+    let key = '';
+
+    try {
+      const res = await fetch('/api/config');
+      if (res.ok) {
+        const cfg = await res.json();
+        url = cfg.supabaseUrl;
+        key = cfg.supabaseAnonKey;
       }
-    };
-    document.head.appendChild(script);
+    } catch (e) {
+      console.warn('Tentando rota direta de functions...');
+      try {
+        const fallbackRes = await fetch('/.netlify/functions/config');
+        if (fallbackRes.ok) {
+          const cfg = await fallbackRes.json();
+          url = cfg.supabaseUrl;
+          key = cfg.supabaseAnonKey;
+        }
+      } catch (err) {}
+    }
+
+    // 3. Inicializa o cliente do Supabase com as credenciais obtidas
+    if (url && key && window.supabase && window.supabase.createClient) {
+      window.supabaseClient = window.supabase.createClient(url, key);
+      console.log('✅ Supabase conectado com sucesso via Netlify Environment Variables!');
+      if (window.WaveData && window.WaveData.syncSupabase) {
+        window.WaveData.syncSupabase();
+      }
+      return window.supabaseClient;
+    } else {
+      console.warn('⚠️ Supabase: Credenciais não retornadas pelo endpoint da nuvem.');
+      return null;
+    }
+  } catch (error) {
+    console.error('Erro na inicialização do Supabase:', error);
+    return null;
   }
 })();
 
