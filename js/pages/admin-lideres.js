@@ -205,7 +205,18 @@ WavePages['admin-lideres'] = {
     csvContent += 'Lider;Sexo;WhatsApp;Finalidade;FaixaEtaria;DiaCelula;Horario;Discipulos;Endereco\n';
 
     filtradas.forEach(c => {
-      csvContent += `"${c.liderNome}";"${c.liderSexo}";"${c.liderWhatsapp}";"${c.finalidade}";"${c.faixaEtaria}";"${c.diaSemana}";"${c.horario}";"${c.totalDiscipulos}";"${c.enderecoFormatado}"\n`;
+      const row = [
+        WaveApp.sanitizeCSVCell(c.liderNome),
+        WaveApp.sanitizeCSVCell(c.liderSexo),
+        WaveApp.sanitizeCSVCell(c.liderWhatsapp),
+        WaveApp.sanitizeCSVCell(c.finalidade),
+        WaveApp.sanitizeCSVCell(c.faixaEtaria),
+        WaveApp.sanitizeCSVCell(c.diaSemana),
+        WaveApp.sanitizeCSVCell(c.horario),
+        WaveApp.sanitizeCSVCell(c.totalDiscipulos),
+        WaveApp.sanitizeCSVCell(c.enderecoFormatado)
+      ].join(';');
+      csvContent += row + '\n';
     });
 
     const encodedUri = encodeURI(csvContent);

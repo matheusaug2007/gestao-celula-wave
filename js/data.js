@@ -175,12 +175,18 @@ window.WaveData = {
       });
     }
 
-    // Sanitiza autorreferência no campo lider
+    // Sanitiza autorreferência estrita por ID e nome exato
+    let liderId = p.discipulador_id || null;
+    if (liderId === p.id) {
+      liderId = null;
+    }
+
     let liderParsed = p.lider || '—';
     const nomeLimpo = (p.nome || '').trim().toLowerCase();
-    const liderLimpo = (p.lider || '').trim().toLowerCase();
-    if (liderLimpo && liderLimpo !== '—' && (liderLimpo === nomeLimpo || nomeLimpo.includes(liderLimpo) || liderLimpo.includes(nomeLimpo))) {
+    const liderLimpo = (liderParsed || '').trim().toLowerCase();
+    if (liderLimpo && liderLimpo !== '—' && liderLimpo === nomeLimpo) {
       liderParsed = '—';
+      liderId = null;
     }
 
     return {
@@ -189,7 +195,7 @@ window.WaveData = {
       foto: p.foto_url || null,
       whatsapp: p.whatsapp || '',
       dataNascimento: p.data_nascimento || '',
-      dataIngresso: p.data_ingresso || p.criado_em ? p.criado_em.split('T')[0] : new Date().toISOString().split('T')[0],
+      dataIngresso: p.data_ingresso || (p.criado_em ? p.criado_em.split('T')[0] : new Date().toISOString().split('T')[0]),
       tipoIngresso: p.tipo_ingresso || 'Recepção',
       sexo: p.sexo || 'MASCULINO',
       rua: p.rua || '',
@@ -199,6 +205,7 @@ window.WaveData = {
       cidade: p.cidade || 'Mandaguari',
       status: p.status || 'ATIVO',
       lider: liderParsed,
+      liderId: liderId,
       eLider: p.e_lider ?? false,
       celulas: celulasParsed
     };
@@ -253,37 +260,67 @@ window.WaveData = {
     return this.getAllLideresAtivos().filter(l => l.sexo === sexo);
   },
 
-  getDiscipulosByLider(liderNome) {
-    if (!liderNome || liderNome === '—') return [];
-    const cleanLider = liderNome.trim().toLowerCase();
-    const primeirONomeLider = cleanLider.split(/\s+/).slice(0, 2).join(' ');
+  // BUG-05: Associação precisa por identificador estável ou nome exato normalizado
+  getDiscipulosByLider(liderIdentificador) {
+    if (!liderIdentificador || liderIdentificador === '—') return [];
+
+    let lider = null;
+    if (typeof liderIdentificador === 'object' && liderIdentificador.id) {
+      lider = liderIdentificador;
+    } else {
+      lider = this.getMembroById(liderIdentificador) || this.getMembroByNome(liderIdentificador);
+    }
+    if (!lider) return [];
+
+    const liderId = lider.id;
+    const liderNomeLimpo = (lider.nome || '').trim().toLowerCase();
+
     return this.membros.filter(m => {
-      if (!m.lider || m.lider === '—' || m.status !== 'ATIVO') return false;
+      // 1. Apenas membros ativos
+      if (m.status !== 'ATIVO') return false;
 
-      // Exclusão explícita do próprio líder para evitar autorreferência (Bug 1 - Crítico)
-      const cleanMembroNome = (m.nome || '').trim().toLowerCase();
-      const primeirONomeMembro = cleanMembroNome.split(/\s+/).slice(0, 2).join(' ');
-      if (cleanMembroNome === cleanLider || primeirONomeMembro === primeirONomeLider) return false;
+      // 2. Proteção contra autorreferência: um membro não pode ser discípulo de si mesmo
+      if (m.id === liderId) return false;
 
-      const mLider = m.lider.trim().toLowerCase();
-      return mLider.includes(primeirONomeLider) || primeirONomeLider.includes(mLider);
+      // 3. Associação direta por identificador único estável (UUID)
+      if (m.liderId && m.liderId === liderId) return true;
+
+      // 4. Fallback: igualdade estrita de nome completo normalizado (sem cortes ou substrings)
+      if (!m.liderId && m.lider && m.lider !== '—') {
+        return m.lider.trim().toLowerCase() === liderNomeLimpo;
+      }
+
+      return false;
     });
   },
 
-  getDiscipulosTodosStatusByLider(liderNome) {
-    if (!liderNome || liderNome === '—') return [];
-    const cleanLider = liderNome.trim().toLowerCase();
-    const primeirONomeLider = cleanLider.split(/\s+/).slice(0, 2).join(' ');
+  getDiscipulosTodosStatusByLider(liderIdentificador) {
+    if (!liderIdentificador || liderIdentificador === '—') return [];
+
+    let lider = null;
+    if (typeof liderIdentificador === 'object' && liderIdentificador.id) {
+      lider = liderIdentificador;
+    } else {
+      lider = this.getMembroById(liderIdentificador) || this.getMembroByNome(liderIdentificador);
+    }
+    if (!lider) return [];
+
+    const liderId = lider.id;
+    const liderNomeLimpo = (lider.nome || '').trim().toLowerCase();
+
     return this.membros.filter(m => {
-      if (!m.lider || m.lider === '—') return false;
+      // Proteção contra autorreferência por ID único
+      if (m.id === liderId) return false;
 
-      // Exclusão explícita do próprio líder para evitar autorreferência (Bug 1 - Crítico)
-      const cleanMembroNome = (m.nome || '').trim().toLowerCase();
-      const primeirONomeMembro = cleanMembroNome.split(/\s+/).slice(0, 2).join(' ');
-      if (cleanMembroNome === cleanLider || primeirONomeMembro === primeirONomeLider) return false;
+      // Associação por ID único
+      if (m.liderId && m.liderId === liderId) return true;
 
-      const mLider = m.lider.trim().toLowerCase();
-      return mLider.includes(primeirONomeLider) || primeirONomeLider.includes(mLider);
+      // Fallback por igualdade estrita de nome completo
+      if (!m.liderId && m.lider && m.lider !== '—') {
+        return m.lider.trim().toLowerCase() === liderNomeLimpo;
+      }
+
+      return false;
     });
   },
 
@@ -487,36 +524,96 @@ window.WaveData = {
 
   async redistribuirDiscipulos(liderOrigemNome, novoLiderNome) {
     const discipulos = this.getDiscipulosTodosStatusByLider(liderOrigemNome);
-    for (const d of discipulos) {
-      d.lider = novoLiderNome;
-      if (window.WaveSupabase) {
-        await WaveSupabase.updatePessoa(d.id, { lider: novoLiderNome });
+    if (!discipulos || discipulos.length === 0) return { ok: true };
+    const mapa = discipulos.map(d => ({ discipuloId: d.id, novoLiderNome }));
+    return this.redistribuirMapaDiscipulos(mapa);
+  },
+
+  async redistribuirMapaDiscipulos(mapa) {
+    // mapa: [ { discipuloId: '...', novoLiderNome: '...', novoLiderId: '...' }, ... ]
+    if (!mapa || mapa.length === 0) return { ok: true };
+
+    // Agrupa por novo líder para disparar requisições em lote ultra-rápidas
+    const lotes = {};
+    for (const item of mapa) {
+      if (!item.novoLiderNome || item.novoLiderNome === '—') continue;
+      
+      let lidId = item.novoLiderId;
+      if (!lidId) {
+        const lidObj = this.getMembroByNome(item.novoLiderNome);
+        lidId = lidObj ? lidObj.id : null;
+      }
+
+      const chave = item.novoLiderNome + '::' + (lidId || '');
+      if (!lotes[chave]) {
+        lotes[chave] = { nome: item.novoLiderNome, id: lidId, ids: [] };
+      }
+      lotes[chave].ids.push(item.discipuloId);
+    }
+
+    if (window.WaveSupabase && window.supabaseClient) {
+      const promises = Object.values(lotes).map(async (lote) => {
+        return WaveSupabase.updatePessoasLider(lote.ids, lote.nome, lote.id);
+      });
+      const results = await Promise.all(promises);
+      const falhou = results.some(r => !r);
+      if (falhou) {
+        console.error('[WaveAudit] Falha ao sincronizar redistribuição em lote no Supabase');
+        return { ok: false, message: 'Falha ao sincronizar redistribuição de discípulos no banco de dados.' };
       }
     }
+
+    // Persistência confirmada: atualiza estado em memória
+    for (const item of mapa) {
+      const d = this.getMembroById(item.discipuloId);
+      if (d) {
+        d.lider = item.novoLiderNome;
+        const lidObj = this.getMembroByNome(item.novoLiderNome);
+        d.liderId = lidObj ? lidObj.id : (item.novoLiderId || null);
+      }
+    }
+
     this.recalcularEstatisticas();
+    console.info(`[WaveAudit] Redistribuição de ${mapa.length} discípulo(s) concluída com sucesso.`);
+    return { ok: true };
   },
 
   async inativarMembro(membroId) {
     const membro = this.getMembroById(membroId);
-    if (!membro) return;
-
-    membro.status = 'INATIVO';
+    if (!membro) {
+      const msg = `Membro não encontrado localmente (ID: ${membroId}).`;
+      console.error('[WaveAudit] inativarMembro falhou:', msg);
+      return { ok: false, message: msg };
+    }
 
     // Ponto 4: Ao inativar líder, todas as suas células são encerradas
-    if (membro.eLider) {
+    const eLiderAnterior = membro.eLider;
+    const celulasAnteriores = membro.celulas;
+
+    if (window.WaveSupabase && window.supabaseClient) {
+      const res = await WaveSupabase.updatePessoa(membroId, {
+        status: 'INATIVO',
+        e_lider: false,
+        celulas_json: []
+      });
+
+      if (!res) {
+        const msg = `Falha ao persistir a inativação de "${membro.nome}" no banco de dados.`;
+        console.error('[WaveAudit] inativarMembro erro remoto no Supabase:', { membroId, nome: membro.nome });
+        return { ok: false, message: msg };
+      }
+    }
+
+    // Persistência remota confirmada: atualiza estado local
+    membro.status = 'INATIVO';
+    if (eLiderAnterior) {
       membro.eLider = false;
       membro.celulas = [];
     }
 
-    if (window.WaveSupabase) {
-      await WaveSupabase.updatePessoa(membroId, {
-        status: 'INATIVO',
-        e_lider: false,
-        celulas_json: JSON.stringify([])
-      });
-    }
-
     this.recalcularEstatisticas();
+    console.info(`[WaveAudit] Membro "${membro.nome}" (ID: ${membroId}) inativado com sucesso.`);
+    return { ok: true, membro };
   },
 
   // Ponto 20 (v1.3): Fechar uma célula individual sem inativar o líder
@@ -538,41 +635,72 @@ window.WaveData = {
       };
     }
 
-    // Remove a célula da lista do líder
-    lider.celulas.splice(celulaIndex, 1);
+    const novasCelulas = lider.celulas.filter((_, idx) => idx !== celulaIndex);
 
-    if (window.WaveSupabase) {
-      await WaveSupabase.updatePessoa(liderId, {
-        celulas_json: JSON.stringify(lider.celulas)
+    if (window.WaveSupabase && window.supabaseClient) {
+      const res = await WaveSupabase.updatePessoa(liderId, {
+        celulas_json: novasCelulas
       });
+      if (!res) {
+        return { ok: false, message: 'Falha ao salvar o fechamento da célula no banco de dados.' };
+      }
     }
 
+    // Remove a célula da lista local
+    lider.celulas = novasCelulas;
     this.recalcularEstatisticas();
     return { ok: true };
   },
 
   async reativarMembro(membroId, novoLiderResponsavel, reativarComoLider, novasCelulas = []) {
     const membro = this.getMembroById(membroId);
-    if (!membro) return;
+    if (!membro) {
+      const msg = `Membro não encontrado localmente (ID: ${membroId}).`;
+      console.error('[WaveAudit] reativarMembro falhou:', msg);
+      return { ok: false, message: msg };
+    }
+
+    let discipuladorId = null;
+    if (novoLiderResponsavel && novoLiderResponsavel !== '—') {
+      const lid = this.getMembroByNome(novoLiderResponsavel);
+      if (lid) discipuladorId = lid.id;
+    }
+
+    const payloadDB = {
+      status: 'ATIVO',
+      lider: novoLiderResponsavel || '—',
+      discipulador_id: discipuladorId,
+      e_lider: reativarComoLider,
+      celulas_json: reativarComoLider ? novasCelulas : []
+    };
+
+    if (window.WaveSupabase && window.supabaseClient) {
+      const res = await WaveSupabase.updatePessoa(membroId, payloadDB);
+      if (!res) {
+        const msg = `Falha ao persistir a reativação de "${membro.nome}" no banco de dados.`;
+        console.error('[WaveAudit] reativarMembro erro remoto no Supabase:', { membroId, nome: membro.nome });
+        return { ok: false, message: msg };
+      }
+    }
 
     membro.status = 'ATIVO';
     membro.lider = novoLiderResponsavel || '—';
+    membro.liderId = discipuladorId;
     membro.eLider = reativarComoLider;
     membro.celulas = reativarComoLider ? novasCelulas : [];
 
-    if (window.WaveSupabase) {
-      await WaveSupabase.updatePessoa(membroId, {
-        status: 'ATIVO',
-        lider: membro.lider,
-        e_lider: membro.eLider,
-        celulas_json: JSON.stringify(membro.celulas)
-      });
-    }
-
     this.recalcularEstatisticas();
+    console.info(`[WaveAudit] Membro "${membro.nome}" (ID: ${membroId}) reativado com sucesso.`);
+    return { ok: true, membro };
   },
 
   async addMembro(membro) {
+    let discipuladorId = membro.liderId || null;
+    if (!discipuladorId && membro.lider && membro.lider !== '—') {
+      const lid = this.getMembroByNome(membro.lider);
+      if (lid) discipuladorId = lid.id;
+    }
+
     const payload = {
       nome: membro.nome ? membro.nome.trim() : '',
       whatsapp: membro.whatsapp ? membro.whatsapp.trim() : null,
@@ -588,49 +716,71 @@ window.WaveData = {
       status: membro.status || 'ATIVO',
       e_lider: membro.eLider ?? false,
       lider: membro.lider || '—',
+      discipulador_id: discipuladorId,
       celulas_json: membro.celulas || []
     };
 
-    if (window.WaveSupabase) {
+    if (window.WaveSupabase && window.supabaseClient) {
       const saved = await WaveSupabase.addPessoa(payload);
-      if (saved && saved.id) {
-        membro.id = saved.id;
+      if (!saved || !saved.id) {
+        return { ok: false, message: 'Falha ao cadastrar discípulo no banco de dados.' };
       }
+      membro.id = saved.id;
+    } else {
+      membro.id = membro.id || 'm-' + Date.now();
     }
 
+    membro.liderId = discipuladorId;
     this.membros.push(membro);
     this.recalcularEstatisticas();
+    return { ok: true, membro };
   },
 
   async updateMembro(membroId, dadosAtualizados) {
     const idx = this.membros.findIndex(m => m.id === membroId);
-    if (idx !== -1) {
-      this.membros[idx] = { ...this.membros[idx], ...dadosAtualizados };
+    if (idx === -1) return { ok: false, message: 'Membro não encontrado localmente.' };
 
-      const payload = {
-        nome: this.membros[idx].nome ? this.membros[idx].nome.trim() : '',
-        whatsapp: this.membros[idx].whatsapp ? this.membros[idx].whatsapp.trim() : null,
-        data_nascimento: this.membros[idx].dataNascimento || null,
-        data_ingresso: this.membros[idx].dataIngresso || null,
-        tipo_ingresso: this.membros[idx].tipoIngresso || 'Recepção',
-        sexo: this.membros[idx].sexo || 'FEMININO',
-        rua: this.membros[idx].rua ? this.membros[idx].rua.trim() : null,
-        numero: this.membros[idx].numero ? this.membros[idx].numero.trim() : null,
-        complemento: this.membros[idx].complemento ? this.membros[idx].complemento.trim() : null,
-        bairro: this.membros[idx].bairro ? this.membros[idx].bairro.trim() : null,
-        cidade: this.membros[idx].cidade ? this.membros[idx].cidade.trim() : 'Mandaguari',
-        status: this.membros[idx].status || 'ATIVO',
-        e_lider: this.membros[idx].eLider ?? false,
-        lider: this.membros[idx].lider || '—',
-        celulas_json: this.membros[idx].celulas || []
-      };
+    const novoLiderNome = dadosAtualizados.lider !== undefined ? dadosAtualizados.lider : (this.membros[idx].lider || '—');
+    let discipuladorId = dadosAtualizados.liderId !== undefined ? dadosAtualizados.liderId : (this.membros[idx].liderId || null);
 
-      if (window.WaveSupabase) {
-        await WaveSupabase.updatePessoa(membroId, payload);
+    if (dadosAtualizados.lider !== undefined) {
+      if (novoLiderNome && novoLiderNome !== '—') {
+        const lid = this.getMembroByNome(novoLiderNome);
+        discipuladorId = lid ? lid.id : null;
+      } else {
+        discipuladorId = null;
       }
-
-      this.recalcularEstatisticas();
     }
+
+    const payload = {
+      nome: (dadosAtualizados.nome !== undefined ? dadosAtualizados.nome : this.membros[idx].nome)?.trim() || '',
+      whatsapp: (dadosAtualizados.whatsapp !== undefined ? dadosAtualizados.whatsapp : this.membros[idx].whatsapp)?.trim() || null,
+      data_nascimento: dadosAtualizados.dataNascimento !== undefined ? dadosAtualizados.dataNascimento : (this.membros[idx].dataNascimento || null),
+      data_ingresso: dadosAtualizados.dataIngresso !== undefined ? dadosAtualizados.dataIngresso : (this.membros[idx].dataIngresso || null),
+      tipo_ingresso: dadosAtualizados.tipoIngresso !== undefined ? dadosAtualizados.tipoIngresso : (this.membros[idx].tipoIngresso || 'Recepção'),
+      sexo: dadosAtualizados.sexo !== undefined ? dadosAtualizados.sexo : (this.membros[idx].sexo || 'FEMININO'),
+      rua: (dadosAtualizados.rua !== undefined ? dadosAtualizados.rua : this.membros[idx].rua)?.trim() || null,
+      numero: (dadosAtualizados.numero !== undefined ? dadosAtualizados.numero : this.membros[idx].numero)?.trim() || null,
+      complemento: (dadosAtualizados.complemento !== undefined ? dadosAtualizados.complemento : this.membros[idx].complemento)?.trim() || null,
+      bairro: (dadosAtualizados.bairro !== undefined ? dadosAtualizados.bairro : this.membros[idx].bairro)?.trim() || null,
+      cidade: (dadosAtualizados.cidade !== undefined ? dadosAtualizados.cidade : this.membros[idx].cidade)?.trim() || 'Mandaguari',
+      status: dadosAtualizados.status !== undefined ? dadosAtualizados.status : (this.membros[idx].status || 'ATIVO'),
+      e_lider: dadosAtualizados.eLider !== undefined ? dadosAtualizados.eLider : (this.membros[idx].eLider ?? false),
+      lider: novoLiderNome,
+      discipulador_id: discipuladorId,
+      celulas_json: dadosAtualizados.celulas !== undefined ? dadosAtualizados.celulas : (this.membros[idx].celulas || [])
+    };
+
+    if (window.WaveSupabase && window.supabaseClient) {
+      const res = await WaveSupabase.updatePessoa(membroId, payload);
+      if (!res) {
+        return { ok: false, message: 'Falha ao atualizar dados no banco de dados.' };
+      }
+    }
+
+    this.membros[idx] = { ...this.membros[idx], ...dadosAtualizados, liderId: discipuladorId };
+    this.recalcularEstatisticas();
+    return { ok: true, membro: this.membros[idx] };
   }
 };
 

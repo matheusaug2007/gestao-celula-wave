@@ -24,6 +24,7 @@ WavePages['admin-membros'] = {
   _membroParaRedistribuir: null,
   _membroParaReativar: null,
   _confirmacaoTrocaLider: null,
+  _pendingFormState: null, // BUG-02: preserva dados do form durante fluxo auxiliar de célula
 
   // Paginação e Ordenação
   _pageSize: 50,
@@ -178,18 +179,18 @@ WavePages['admin-membros'] = {
 
     filtrados.forEach(m => {
       const row = [
-        `"${m.nome || ''}"`,
-        `"${m.whatsapp || ''}"`,
-        `"${m.dataNascimento || ''}"`,
-        `"${WaveData.calcIdade(m.dataNascimento)}"`,
-        `"${m.dataIngresso || ''}"`,
-        `"${m.tipoIngresso || ''}"`,
-        `"${m.sexo || ''}"`,
-        `"${m.bairro || ''}"`,
-        `"${m.cidade || 'Mandaguari'}"`,
-        `"${m.lider || ''}"`,
-        `"${m.eLider ? 'Sim' : 'Não'}"`,
-        `"${m.status || 'ATIVO'}"`
+        WaveApp.sanitizeCSVCell(m.nome),
+        WaveApp.sanitizeCSVCell(m.whatsapp),
+        WaveApp.sanitizeCSVCell(m.dataNascimento),
+        WaveApp.sanitizeCSVCell(WaveData.calcIdade(m.dataNascimento)),
+        WaveApp.sanitizeCSVCell(m.dataIngresso),
+        WaveApp.sanitizeCSVCell(m.tipoIngresso),
+        WaveApp.sanitizeCSVCell(m.sexo),
+        WaveApp.sanitizeCSVCell(m.bairro),
+        WaveApp.sanitizeCSVCell(m.cidade || 'Mandaguari'),
+        WaveApp.sanitizeCSVCell(m.lider),
+        WaveApp.sanitizeCSVCell(m.eLider ? 'Sim' : 'Não'),
+        WaveApp.sanitizeCSVCell(m.status || 'ATIVO')
       ].join(';');
       csvContent += row + '\n';
     });
@@ -524,126 +525,154 @@ WavePages['admin-membros'] = {
       </div>
 
       <!-- Modal: Formulário de Membro (Criar / Editar) -->
-      <div class="modal-overlay ${this._showForm ? 'open' : ''}" onclick="WavePages['admin-membros'].closeFormOutside(event)">
-        <div class="modal-sheet" style="max-height:88vh;display:flex;flex-direction:column;padding:var(--space-xl) var(--space-xl) var(--space-md) var(--space-xl);">
-          <div class="sheet-handle"></div>
-          <div class="sheet-header" style="margin-bottom:var(--space-sm);">
-            <h3 class="sheet-title">${this._editandoMembro ? 'Editar Membro' : 'Novo Cadastro de Membro'}</h3>
-            <button class="sheet-close" onclick="WavePages['admin-membros'].fecharForm()">
-              <i data-lucide="x" style="width:18px;height:18px;"></i>
-            </button>
-          </div>
+      ${(() => {
+        const draft = this._pendingFormState ? (this._pendingFormState.formData || {}) : null;
+        const isEditing = this._editandoMembro && this._membroDetalhes;
+        const valNome = draft ? (draft.nome || '') : (isEditing ? this._membroDetalhes.nome : '');
+        const valWhats = draft ? (draft.whatsapp || '') : (isEditing ? this._membroDetalhes.whatsapp : '');
+        const valNasc = draft ? (draft.dataNascimento || '') : (isEditing ? this._membroDetalhes.dataNascimento : '');
+        const valIngresso = draft ? (draft.dataIngresso || hojeData) : (isEditing ? (this._membroDetalhes.dataIngresso || hojeData) : hojeData);
+        const valTipoIngresso = draft ? (draft.tipoIngresso || '') : (isEditing ? this._membroDetalhes.tipoIngresso : '');
+        const valSexo = draft ? (draft.sexo || '') : (isEditing ? this._membroDetalhes.sexo : '');
+        const valRua = draft ? (draft.rua || '') : (isEditing ? (this._membroDetalhes.rua || '') : '');
+        const valNum = draft ? (draft.numero || '') : (isEditing ? (this._membroDetalhes.numero || '') : '');
+        const valBairro = draft ? (draft.bairro || '') : (isEditing ? (this._membroDetalhes.bairro || '') : '');
+        const valCidade = draft ? (draft.cidade || 'Mandaguari') : (isEditing ? (this._membroDetalhes.cidade || 'Mandaguari') : 'Mandaguari');
+        const valCompl = draft ? (draft.complemento || '') : (isEditing ? (this._membroDetalhes.complemento || '') : '');
+        const valLider = draft ? (draft.lider || '—') : (isEditing ? this._membroDetalhes.lider : '—');
+        const valELider = draft ? (draft.eLider === 'true' || draft.eLider === true) : (isEditing ? this._membroDetalhes.eLider : false);
+        const isOpen = this._showForm || !!this._pendingFormState;
 
-          <form id="member-main-form" onsubmit="WavePages['admin-membros'].salvarMembroSubmit(event)" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
-            <div style="display:flex;flex-direction:column;gap:var(--space-md);overflow-y:auto;padding-right:6px;flex:1;padding-bottom:var(--space-md);">
-              
-              <div class="input-group">
-                <label class="input-label">Nome Completo *</label>
-                <input class="input-field" type="text" name="nome" id="form-membro-nome" value="${this._editandoMembro && this._membroDetalhes ? this._membroDetalhes.nome : ''}" placeholder="Ex: Maria Clara Souza" required>
+        return `
+          <div class="modal-overlay ${isOpen ? 'open' : ''}" onclick="WavePages['admin-membros'].closeFormOutside(event)">
+            <div class="modal-sheet" style="max-height:88vh;display:flex;flex-direction:column;padding:var(--space-xl) var(--space-xl) var(--space-md) var(--space-xl);">
+              <div class="sheet-handle"></div>
+              <div class="sheet-header" style="margin-bottom:var(--space-sm);">
+                <h3 class="sheet-title">${this._editandoMembro ? 'Editar Membro' : 'Novo Cadastro de Membro'}</h3>
+                <button class="sheet-close" onclick="WavePages['admin-membros'].fecharForm()">
+                  <i data-lucide="x" style="width:18px;height:18px;"></i>
+                </button>
               </div>
 
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
-                <div class="input-group">
-                  <label class="input-label">WhatsApp *</label>
-                  <input class="input-field tel-mask" type="text" name="whatsapp" value="${this._editandoMembro && this._membroDetalhes ? this._membroDetalhes.whatsapp : ''}" placeholder="(44) 99999-9999" oninput="WavePages['admin-membros'].maskPhone(this)" required>
+              <form id="member-main-form" onsubmit="WavePages['admin-membros'].salvarMembroSubmit(event)" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
+                <div style="display:flex;flex-direction:column;gap:var(--space-md);overflow-y:auto;padding-right:6px;flex:1;padding-bottom:var(--space-md);">
+                  
+                  ${this._pendingFormState ? `
+                    <div style="background:rgba(34, 197, 94, 0.15);border:1px solid var(--success);color:var(--white);padding:10px 14px;border-radius:var(--radius-md);font-size:0.82rem;display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                      <i data-lucide="check-circle" style="width:18px;height:18px;color:var(--success);flex-shrink:0;"></i>
+                      <span><strong>Cadastro Restaurado:</strong> Os dados que você estava preenchendo foram preservados. Selecione o líder regularizado e salve!</span>
+                    </div>
+                  ` : ''}
+
+                  <div class="input-group">
+                    <label class="input-label">Nome Completo *</label>
+                    <input class="input-field" type="text" name="nome" id="form-membro-nome" value="${valNome}" placeholder="Ex: Maria Clara Souza" required>
+                  </div>
+
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+                    <div class="input-group">
+                      <label class="input-label">WhatsApp *</label>
+                      <input class="input-field tel-mask" type="text" name="whatsapp" value="${valWhats}" placeholder="(44) 99999-9999" oninput="WavePages['admin-membros'].maskPhone(this)" required>
+                    </div>
+                    <div class="input-group">
+                      <label class="input-label">Data Nasc. *</label>
+                      <input class="input-field" type="date" name="dataNascimento" id="form-membro-nasc" min="1900-01-01" max="2099-12-31" value="${valNasc}" oninput="WavePages['admin-membros'].validarMaxAnoData(this)" required>
+                    </div>
+                  </div>
+
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+                    <div class="input-group">
+                      <label class="input-label">Data Ingresso *</label>
+                      <input class="input-field" type="date" name="dataIngresso" min="1900-01-01" max="2099-12-31" value="${valIngresso}" oninput="WavePages['admin-membros'].validarMaxAnoData(this)" required>
+                    </div>
+                    <div class="input-group">
+                      <label class="input-label">Tipo Ingresso *</label>
+                      <select class="input-field" name="tipoIngresso" required>
+                        <option value="" ${!valTipoIngresso ? 'selected' : ''} disabled>Selecione uma opção</option>
+                        <option value="Recepção" ${valTipoIngresso === 'Recepção' ? 'selected' : ''}>Recepção</option>
+                        <option value="Batismo" ${valTipoIngresso === 'Batismo' ? 'selected' : ''}>Batismo</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="input-group">
+                    <label class="input-label">Sexo *</label>
+                    <select class="input-field" name="sexo" id="form-membro-sexo" onchange="WavePages['admin-membros'].atualizarOpcoesLiderPorSexo(this.value)" required>
+                      <option value="" ${!valSexo ? 'selected' : ''} disabled>Selecione uma opção</option>
+                      <option value="FEMININO" ${valSexo === 'FEMININO' ? 'selected' : ''}>Feminino</option>
+                      <option value="MASCULINO" ${valSexo === 'MASCULINO' ? 'selected' : ''}>Masculino</option>
+                    </select>
+                  </div>
+
+                  <!-- Endereço Residencial -->
+                  <div style="font-size:0.8rem;font-weight:700;color:var(--text-secondary);margin-top:4px;padding-top:8px;border-top:1px solid var(--border-subtle);">
+                    ENDEREÇO RESIDENCIAL
+                  </div>
+
+                  <div style="display:grid;grid-template-columns:3fr 1fr;gap:var(--space-md);">
+                    <div class="input-group">
+                      <label class="input-label">Rua / Logradouro</label>
+                      <input class="input-field" type="text" name="rua" value="${valRua}" placeholder="Ex: Av. Amazonas">
+                    </div>
+                    <div class="input-group">
+                      <label class="input-label">Nº</label>
+                      <input class="input-field" type="text" name="numero" value="${valNum}" placeholder="123">
+                    </div>
+                  </div>
+
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+                    <div class="input-group">
+                      <label class="input-label">Bairro</label>
+                      <input class="input-field" type="text" name="bairro" value="${valBairro}" placeholder="Ex: Centro">
+                    </div>
+                    <div class="input-group">
+                      <label class="input-label">Cidade</label>
+                      <input class="input-field" type="text" name="cidade" value="${valCidade}">
+                    </div>
+                  </div>
+
+                  <div class="input-group">
+                    <label class="input-label">Complemento</label>
+                    <input class="input-field" type="text" name="complemento" value="${valCompl}" placeholder="Ex: Apto 12">
+                  </div>
+
+                  <!-- Termo 5: VÍNCULO & LIDERANÇA -->
+                  <div style="font-size:0.8rem;font-weight:700;color:var(--text-secondary);margin-top:4px;padding-top:8px;border-top:1px solid var(--border-subtle);">
+                    VÍNCULO & LIDERANÇA
+                  </div>
+
+                  <div class="input-group">
+                    <label class="input-label">Líder Responsável * (Discipulado por)</label>
+                    <select class="input-field" name="lider" id="form-lider-select" required>
+                      ${this.renderLideresOptions(valSexo, valLider)}
+                    </select>
+                  </div>
+
+                  <div class="input-group">
+                    <label class="input-label">É Líder de Célula? *</label>
+                    <select class="input-field" name="eLider" id="form-e-lider-select" onchange="WavePages['admin-membros'].toggleLiderCells(this.value)" required>
+                      <option value="false" ${!valELider ? 'selected' : ''}>Não (Apenas Discípulo)</option>
+                      <option value="true" ${valELider ? 'selected' : ''}>Sim (Líder de Célula)</option>
+                    </select>
+                  </div>
+
+                  <!-- Ponto 1: Bloco de Múltiplas Células do Líder -->
+                  <div id="celulas-container-bloco" style="display:${valELider ? 'flex' : 'none'};flex-direction:column;gap:var(--space-md);background:var(--bg-elevated);padding:var(--space-md);border-radius:var(--radius-lg);border:1px solid var(--border-medium);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                      <span style="font-size:0.8rem;color:var(--warning);font-weight:700;">👑 Células Lideradas (Múltiplas Células)</span>
+                      <button type="button" class="btn btn-secondary" onclick="WavePages['admin-membros'].adicionarCelulaTemp()" style="font-size:0.72rem;padding:4px 8px;">
+                        <i data-lucide="plus" style="width:12px;height:12px;"></i> Adicionar outra Célula
+                      </button>
+                    </div>
+
+                    <div id="lista-celulas-temp" style="display:flex;flex-direction:column;gap:var(--space-md);">
+                      ${this.renderCelulasTempHtml()}
+                    </div>
+                  </div>
+
                 </div>
-                <div class="input-group">
-                  <label class="input-label">Data Nasc. *</label>
-                  <input class="input-field" type="date" name="dataNascimento" id="form-membro-nasc" value="${this._editandoMembro && this._membroDetalhes ? this._membroDetalhes.dataNascimento : ''}" required>
-                </div>
-              </div>
-
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
-                <div class="input-group">
-                  <label class="input-label">Data Ingresso *</label>
-                  <input class="input-field" type="date" name="dataIngresso" value="${this._editandoMembro && this._membroDetalhes ? (this._membroDetalhes.dataIngresso || hojeData) : hojeData}" required>
-                </div>
-                <div class="input-group">
-                  <label class="input-label">Tipo Ingresso *</label>
-                  <select class="input-field" name="tipoIngresso" required>
-                    <option value="" ${!this._editandoMembro || !this._membroDetalhes || !this._membroDetalhes.tipoIngresso ? 'selected' : ''} disabled>Selecione uma opção</option>
-                    <option value="Recepção" ${this._editandoMembro && this._membroDetalhes && this._membroDetalhes.tipoIngresso === 'Recepção' ? 'selected' : ''}>Recepção</option>
-                    <option value="Batismo" ${this._editandoMembro && this._membroDetalhes && this._membroDetalhes.tipoIngresso === 'Batismo' ? 'selected' : ''}>Batismo</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="input-group">
-                <label class="input-label">Sexo *</label>
-                <select class="input-field" name="sexo" id="form-membro-sexo" onchange="WavePages['admin-membros'].atualizarOpcoesLiderPorSexo(this.value)" required>
-                  <option value="" ${!this._editandoMembro || !this._membroDetalhes || !this._membroDetalhes.sexo ? 'selected' : ''} disabled>Selecione uma opção</option>
-                  <option value="FEMININO" ${this._editandoMembro && this._membroDetalhes && this._membroDetalhes.sexo === 'FEMININO' ? 'selected' : ''}>Feminino</option>
-                  <option value="MASCULINO" ${this._editandoMembro && this._membroDetalhes && this._membroDetalhes.sexo === 'MASCULINO' ? 'selected' : ''}>Masculino</option>
-                </select>
-              </div>
-
-              <!-- Endereço Residencial -->
-              <div style="font-size:0.8rem;font-weight:700;color:var(--text-secondary);margin-top:4px;padding-top:8px;border-top:1px solid var(--border-subtle);">
-                ENDEREÇO RESIDENCIAL
-              </div>
-
-              <div style="display:grid;grid-template-columns:3fr 1fr;gap:var(--space-md);">
-                <div class="input-group">
-                  <label class="input-label">Rua / Logradouro</label>
-                  <input class="input-field" type="text" name="rua" value="${this._editandoMembro && this._membroDetalhes ? (this._membroDetalhes.rua || '') : ''}" placeholder="Ex: Av. Amazonas">
-                </div>
-                <div class="input-group">
-                  <label class="input-label">Nº</label>
-                  <input class="input-field" type="text" name="numero" value="${this._editandoMembro && this._membroDetalhes ? (this._membroDetalhes.numero || '') : ''}" placeholder="123">
-                </div>
-              </div>
-
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
-                <div class="input-group">
-                  <label class="input-label">Bairro</label>
-                  <input class="input-field" type="text" name="bairro" value="${this._editandoMembro && this._membroDetalhes ? (this._membroDetalhes.bairro || '') : ''}" placeholder="Ex: Centro">
-                </div>
-                <div class="input-group">
-                  <label class="input-label">Cidade</label>
-                  <input class="input-field" type="text" name="cidade" value="${this._editandoMembro && this._membroDetalhes ? (this._membroDetalhes.cidade || 'Mandaguari') : 'Mandaguari'}">
-                </div>
-              </div>
-
-              <div class="input-group">
-                <label class="input-label">Complemento</label>
-                <input class="input-field" type="text" name="complemento" value="${this._editandoMembro && this._membroDetalhes ? (this._membroDetalhes.complemento || '') : ''}" placeholder="Ex: Apto 12">
-              </div>
-
-              <!-- Termo 5: VÍNCULO & LIDERANÇA -->
-              <div style="font-size:0.8rem;font-weight:700;color:var(--text-secondary);margin-top:4px;padding-top:8px;border-top:1px solid var(--border-subtle);">
-                VÍNCULO & LIDERANÇA
-              </div>
-
-              <div class="input-group">
-                <label class="input-label">Líder Responsável * (Discipulado por)</label>
-                <select class="input-field" name="lider" id="form-lider-select">
-                  ${this.renderLideresOptions(this._editandoMembro && this._membroDetalhes ? this._membroDetalhes.sexo : '', this._editandoMembro && this._membroDetalhes ? this._membroDetalhes.lider : '—')}
-                </select>
-              </div>
-
-              <div class="input-group">
-                <label class="input-label">É Líder de Célula? *</label>
-                <select class="input-field" name="eLider" id="form-e-lider-select" onchange="WavePages['admin-membros'].toggleLiderCells(this.value)" required>
-                  <option value="false" ${this._editandoMembro && this._membroDetalhes && !this._membroDetalhes.eLider ? 'selected' : ''}>Não (Apenas Discípulo)</option>
-                  <option value="true" ${this._editandoMembro && this._membroDetalhes && this._membroDetalhes.eLider ? 'selected' : ''}>Sim (Líder de Célula)</option>
-                </select>
-              </div>
-
-              <!-- Ponto 1: Bloco de Múltiplas Células do Líder -->
-              <div id="celulas-container-bloco" style="display:${this._editandoMembro && this._membroDetalhes && this._membroDetalhes.eLider ? 'flex' : 'none'};flex-direction:column;gap:var(--space-md);background:var(--bg-elevated);padding:var(--space-md);border-radius:var(--radius-lg);border:1px solid var(--border-medium);">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                  <span style="font-size:0.8rem;color:var(--warning);font-weight:700;">👑 Células Lideradas (Múltiplas Células)</span>
-                  <button type="button" class="btn btn-secondary" onclick="WavePages['admin-membros'].adicionarCelulaTemp()" style="font-size:0.72rem;padding:4px 8px;">
-                    <i data-lucide="plus" style="width:12px;height:12px;"></i> Adicionar outra Célula
-                  </button>
-                </div>
-
-                <div id="lista-celulas-temp" style="display:flex;flex-direction:column;gap:var(--space-md);">
-                  ${this.renderCelulasTempHtml()}
-                </div>
-              </div>
-
-            </div>
+        `;
+      })()}
 
             <!-- Rodapé Fixo com Botão de Salvar -->
             <div style="display:flex;gap:var(--space-md);padding-top:var(--space-md);border-top:1px solid var(--border-subtle);background:var(--bg-card);flex-shrink:0;margin-top:auto;">
@@ -776,11 +805,14 @@ WavePages['admin-membros'] = {
       </div>
 
       <!-- Modal de Redistribuição de Discípulos ao Inativar Líder (Ponto 4) -->
+      <!-- Modal de Redistribuição de Discípulos ao Inativar Líder (BUG-04: Redistribuição Individual) -->
       <div class="modal-overlay ${this._membroParaRedistribuir ? 'open' : ''}">
-        <div class="modal-sheet">
+        <div class="modal-sheet" style="max-height:88vh;display:flex;flex-direction:column;max-width:580px;">
           <div class="sheet-handle"></div>
-          <div class="sheet-header">
-            <h3 class="sheet-title" style="color:var(--warning);">👑 Redistribuição de Discípulos</h3>
+          <div class="sheet-header" style="margin-bottom:var(--space-sm);">
+            <h3 class="sheet-title" style="color:var(--warning);display:flex;align-items:center;gap:6px;">
+              👑 Redistribuição de Discípulos
+            </h3>
             <button class="sheet-close" onclick="WavePages['admin-membros']._membroParaRedistribuir = null; WaveApp.renderCurrentPage();">
               <i data-lucide="x" style="width:18px;height:18px;"></i>
             </button>
@@ -792,24 +824,48 @@ WavePages['admin-membros'] = {
         const outrosLideres = WaveData.getAllLideresAtivos().filter(l => l.id !== liderInativado.id && l.sexo === liderInativado.sexo);
 
         return `
-              <div style="display:flex;flex-direction:column;gap:var(--space-md);">
-                <p style="font-size:0.88rem;color:var(--text-secondary);">
+              <div style="display:flex;flex-direction:column;gap:var(--space-sm);flex:1;min-height:0;overflow:hidden;">
+                <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:2px;">
                   O líder <strong>${liderInativado.nome}</strong> possui <strong style="color:var(--white);">${discipulos.length} discípulo(s)</strong> vinculados a ele.
-                  Antes de inativá-lo, todos os seus discípulos (e discípulos-líder) serão reatribuídos para outro líder do mesmo sexo (${liderInativado.sexo === 'MASCULINO' ? 'Masculino' : 'Feminino'}):
+                  Defina o novo líder responsável para cada um (${liderInativado.sexo === 'MASCULINO' ? 'Líderes Masculinos' : 'Líderes Femininos'}):
                 </p>
 
-                <div class="input-group">
-                  <label class="input-label">Selecione o Novo Líder Responsável *</label>
-                  <select class="input-field" id="select-novo-lider-redistribuir">
-                    ${outrosLideres.map(l => `<option value="${l.nome}">${l.nome}</option>`).join('')}
-                  </select>
+                <!-- Atalho: Aplicar a todos de uma vez -->
+                ${outrosLideres.length > 0 ? `
+                  <div style="background:var(--bg-elevated);padding:8px 12px;border-radius:var(--radius-md);border:1px solid var(--border-subtle);display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:0.75rem;font-weight:700;color:var(--text-secondary);white-space:nowrap;">Definir para todos:</span>
+                    <select class="input-field" style="padding:4px 8px;font-size:0.8rem;flex:1;" onchange="WavePages['admin-membros'].aplicarLiderParaTodos(this.value)">
+                      <option value="">-- Escolha para preencher todos --</option>
+                      ${outrosLideres.map(l => `<option value="${l.nome}" data-lider-id="${l.id}">${l.nome}</option>`).join('')}
+                    </select>
+                  </div>
+                ` : ''}
+
+                <!-- Lista de Discípulos com Seletor Individual -->
+                <div style="flex:1;min-height:0;overflow-y:auto;padding-right:4px;display:flex;flex-direction:column;gap:6px;margin:4px 0;">
+                  ${discipulos.map((d, idx) => `
+                    <div style="background:var(--bg-card);padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--border-subtle);display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                      <div style="min-width:0;flex:1;">
+                        <div style="display:flex;align-items:center;gap:6px;">
+                          <strong style="font-size:0.83rem;color:var(--white);">${idx + 1}. ${d.nome}</strong>
+                          ${d.eLider ? '<span style="font-size:0.65rem;color:var(--warning);font-weight:700;">👑 (Líder)</span>' : ''}
+                        </div>
+                        <span style="font-size:0.72rem;color:var(--text-tertiary);">${d.bairro || 'Mandaguari'} · ${d.sexo === 'MASCULINO' ? 'Masc' : 'Fem'}</span>
+                      </div>
+                      <div style="flex-shrink:0;min-width:170px;">
+                        <select class="input-field select-redistribuir-individual" data-discipulo-id="${d.id}" style="padding:4px 8px;font-size:0.8rem;width:100%;">
+                          ${outrosLideres.map(l => `<option value="${l.nome}" data-lider-id="${l.id}">${l.nome}</option>`).join('')}
+                        </select>
+                      </div>
+                    </div>
+                  `).join('')}
                 </div>
 
-                <div style="display:flex;gap:var(--space-md);margin-top:var(--space-md);">
+                <div style="display:flex;gap:var(--space-md);padding-top:var(--space-sm);border-top:1px solid var(--border-subtle);margin-top:auto;">
                   <button class="btn btn-secondary" onclick="WavePages['admin-membros']._membroParaRedistribuir = null; WaveApp.renderCurrentPage();" style="flex:1;">
                     Cancelar
                   </button>
-                  <button class="btn btn-primary" onclick="WavePages['admin-membros'].confirmarRedistribuicaoEInativar()" style="flex:1;background:var(--warning);color:var(--black);">
+                  <button class="btn btn-primary" id="btn-confirmar-redistribuicao" onclick="WavePages['admin-membros'].confirmarRedistribuicaoEInativar()" style="flex:1;background:var(--warning);color:var(--black);font-weight:700;">
                     Reatribuir & Inativar
                   </button>
                 </div>
@@ -992,10 +1048,14 @@ WavePages['admin-membros'] = {
 
   renderLideresOptions(sexoFiltro, liderSelecionado = '—') {
     if (!sexoFiltro || sexoFiltro === '') {
-      return `<option value="—" selected disabled>Selecione o sexo do discípulo primeiro</option>`;
+      return `<option value="" selected disabled>Selecione o sexo do discípulo primeiro</option>`;
     }
     const lideres = WaveData.getLideresPorSexo(sexoFiltro);
-    let html = `<option value="—">Selecione o Líder Responsável</option>`;
+    if (lideres.length === 0) {
+      return `<option value="" selected disabled>Nenhum líder ativo encontrado para este sexo</option>`;
+    }
+    const isSemLider = !liderSelecionado || liderSelecionado === '—' || liderSelecionado === '';
+    let html = `<option value="" disabled ${isSemLider ? 'selected' : ''}>Selecione o Líder Responsável</option>`;
     lideres.forEach(l => {
       const selected = l.nome === liderSelecionado ? 'selected' : '';
       html += `<option value="${l.nome}" ${selected}>${l.nome}</option>`;
@@ -1057,10 +1117,10 @@ WavePages['admin-membros'] = {
             `}
           </div>
 
-          <!-- Seleção de Faixa Etária (Permite até 2 tipos) -->
+          <!-- Seleção de Faixa Etária -->
           <div class="input-group">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-              <label class="input-label" style="margin-bottom:0;">Faixa Etária * <span style="font-size:0.72rem;color:var(--text-tertiary);font-weight:normal;">(Selecione até 2)</span></label>
+              <label class="input-label" style="margin-bottom:0;">Faixa Etária *</label>
               <span style="font-size:0.75rem;color:var(--warning);font-weight:600;">${WaveData.formatFaixaEtaria(c.faixaEtaria)}</span>
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:6px;">
@@ -1075,6 +1135,10 @@ WavePages['admin-membros'] = {
                   </button>
                 `;
       }).join('')}
+            </div>
+            <div id="aviso-faixa-erro-${idx}" style="display:${this._erroFaixaIdx === idx ? 'flex' : 'none'};align-items:center;gap:6px;margin-top:6px;color:var(--danger);font-size:0.78rem;font-weight:700;background:rgba(239, 68, 68, 0.12);padding:6px 10px;border-radius:var(--radius-sm);border:1px solid var(--danger);">
+              <i data-lucide="alert-circle" style="width:15px;height:15px;flex-shrink:0;"></i>
+              <span>A célula deve possuir ao menos 1 faixa etária selecionada.</span>
             </div>
           </div>
 
@@ -1121,6 +1185,9 @@ WavePages['admin-membros'] = {
     }).join('');
   },
 
+  _erroFaixaIdx: null,
+  _erroFaixaTimeout: null,
+
   toggleFaixaEtariaCelula(idx, faixa) {
     if (!this._tempCelulasForm[idx]) return;
     const c = this._tempCelulasForm[idx];
@@ -1129,15 +1196,34 @@ WavePages['admin-membros'] = {
     if (faixas.includes(faixa)) {
       if (faixas.length > 1) {
         faixas = faixas.filter(f => f !== faixa);
+        this._erroFaixaIdx = null;
+        if (this._erroFaixaTimeout) clearTimeout(this._erroFaixaTimeout);
       } else {
-        WaveApp.showToast('Selecione pelo menos 1 faixa etária para a célula.', 'warning');
+        // Usuário tentou remover a única faixa (deixando sem nenhuma)
+        this._erroFaixaIdx = idx;
+        if (this._erroFaixaTimeout) clearTimeout(this._erroFaixaTimeout);
+
+        const container = document.getElementById('lista-celulas-temp');
+        if (container) {
+          container.innerHTML = this.renderCelulasTempHtml();
+          if (window.lucide) lucide.createIcons();
+        }
+
+        WaveApp.showToast('A célula deve possuir ao menos 1 faixa etária selecionada.', 'danger');
+
+        // Some automaticamente após 3.5 segundos
+        this._erroFaixaTimeout = setTimeout(() => {
+          this._erroFaixaIdx = null;
+          const avisoEl = document.getElementById(`aviso-faixa-erro-${idx}`);
+          if (avisoEl) avisoEl.style.display = 'none';
+        }, 3500);
+
         return;
       }
     } else {
-      if (faixas.length >= 2) {
-        faixas.shift(); // Limite máximo de 2 faixas etárias por célula
-      }
       faixas.push(faixa);
+      this._erroFaixaIdx = null;
+      if (this._erroFaixaTimeout) clearTimeout(this._erroFaixaTimeout);
     }
 
     c.faixaEtaria = faixas;
@@ -1280,16 +1366,35 @@ WavePages['admin-membros'] = {
   setBairro(val) { this._filterBairro = val; this._currentPageNum = 1; this.filterLive(); },
   setCidade(val) { this._filterCidade = val; this._currentPageNum = 1; this.filterLive(); },
 
+  // Máscara fluida de telefone que permite apagar normalmente com Backspace
   maskPhone(input) {
+    if (!input) return;
     let v = input.value.replace(/\D/g, '');
     if (v.length > 11) v = v.slice(0, 11);
 
-    if (v.length > 6) {
+    if (v.length === 0) {
+      input.value = '';
+      return;
+    }
+
+    if (v.length > 10) {
       input.value = `(${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7)}`;
+    } else if (v.length > 6) {
+      input.value = `(${v.slice(0, 2)}) ${v.slice(2, 6)}-${v.slice(6)}`;
     } else if (v.length > 2) {
       input.value = `(${v.slice(0, 2)}) ${v.slice(2)}`;
-    } else if (v.length > 0) {
+    } else {
       input.value = `(${v}`;
+    }
+  },
+
+  // Impede que o ano tenha mais de 4 dígitos
+  validarMaxAnoData(input) {
+    if (!input || !input.value) return;
+    const parts = input.value.split('-');
+    if (parts.length === 3 && parts[0].length > 4) {
+      const ano = parts[0].slice(0, 4);
+      input.value = `${ano}-${parts[1]}-${parts[2]}`;
     }
   },
 
@@ -1369,6 +1474,15 @@ WavePages['admin-membros'] = {
     this._editandoMembro = false;
     this._membroDetalhes = null;
     this._tempCelulasForm = [];
+    this._erroFaixaIdx = null;
+    if (this._erroFaixaTimeout) clearTimeout(this._erroFaixaTimeout);
+    this._showForm = true;
+    WaveApp.renderCurrentPage();
+  },
+
+  restaurarFormPendente() {
+    this._erroFaixaIdx = null;
+    if (this._erroFaixaTimeout) clearTimeout(this._erroFaixaTimeout);
     this._showForm = true;
     WaveApp.renderCurrentPage();
   },
@@ -1376,6 +1490,8 @@ WavePages['admin-membros'] = {
   abrirEdicaoMembroForm() {
     this._editandoMembro = true;
     this._showForm = true;
+    this._erroFaixaIdx = null;
+    if (this._erroFaixaTimeout) clearTimeout(this._erroFaixaTimeout);
     if (this._membroDetalhes && this._membroDetalhes.celulas) {
       this._tempCelulasForm = JSON.parse(JSON.stringify(this._membroDetalhes.celulas));
     } else {
@@ -1388,6 +1504,9 @@ WavePages['admin-membros'] = {
     this._showForm = false;
     this._editandoMembro = false;
     this._tempCelulasForm = [];
+    this._erroFaixaIdx = null;
+    if (this._erroFaixaTimeout) clearTimeout(this._erroFaixaTimeout);
+    this._pendingFormState = null; // BUG-02: descarta estado pendente ao fechar manualmente
     WaveApp.renderCurrentPage();
   },
 
@@ -1452,9 +1571,13 @@ WavePages['admin-membros'] = {
         type: 'danger'
       });
       if (confirmar) {
-        await WaveData.inativarMembro(membroId);
-        WaveApp.showToast(`O discípulo ${m.nome} foi inativado.`, 'warning');
-        WaveApp.renderCurrentPage();
+        const res = await WaveData.inativarMembro(membroId);
+        if (res && res.ok) {
+          WaveApp.showToast(`O discípulo ${m.nome} foi inativado.`, 'warning');
+          WaveApp.renderCurrentPage();
+        } else {
+          WaveApp.showToast(`❌ Falha ao inativar ${m.nome}: ${res?.message || 'Erro de persistência remota'}`, 'danger');
+        }
       }
     } else {
       // Reativação: Ponto 4 (Pergunta obrigatória)
@@ -1463,24 +1586,73 @@ WavePages['admin-membros'] = {
     }
   },
 
+  aplicarLiderParaTodos(liderNome) {
+    if (!liderNome) return;
+    const selects = document.querySelectorAll('.select-redistribuir-individual');
+    selects.forEach(sel => {
+      sel.value = liderNome;
+    });
+  },
+
   async confirmarRedistribuicaoEInativar() {
     if (!this._membroParaRedistribuir) return;
 
-    const select = document.getElementById('select-novo-lider-redistribuir');
-    const novoLiderNome = select ? select.value : '';
+    const selects = document.querySelectorAll('.select-redistribuir-individual');
+    const mapa = [];
+    let faltou = false;
 
-    if (!novoLiderNome) {
-      await WaveApp.alert('Selecione um líder válido para redistribuir os discípulos.', 'Seleção Obrigatória', 'warning');
+    selects.forEach(sel => {
+      const discipuloId = sel.getAttribute('data-discipulo-id');
+      const novoLiderNome = sel.value;
+      const opt = sel.options[sel.selectedIndex];
+      const novoLiderId = opt ? opt.getAttribute('data-lider-id') : null;
+
+      if (!novoLiderNome || novoLiderNome === '—') {
+        faltou = true;
+      } else {
+        mapa.push({ discipuloId, novoLiderNome, novoLiderId });
+      }
+    });
+
+    if (faltou || (selects.length > 0 && mapa.length !== selects.length)) {
+      await WaveApp.alert('Por favor, selecione um líder de destino para todos os discípulos antes de continuar.', 'Seleção Incompleta', 'warning');
       return;
     }
 
-    const liderInativado = this._membroParaRedistribuir;
-    await WaveData.redistribuirDiscipulos(liderInativado.nome, novoLiderNome);
-    await WaveData.inativarMembro(liderInativado.id);
+    const btn = document.getElementById('btn-confirmar-redistribuicao');
+    const originalBtnText = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>Processando redistribuição...</span>';
+    }
 
-    this._membroParaRedistribuir = null;
-    WaveApp.showToast(`✅ Discípulos reatribuídos para ${novoLiderNome} e ${liderInativado.nome} inativado com sucesso!`, 'success');
-    WaveApp.renderCurrentPage();
+    try {
+      const liderInativado = this._membroParaRedistribuir;
+
+      if (mapa.length > 0) {
+        const resRedist = await WaveData.redistribuirMapaDiscipulos(mapa);
+        if (!resRedist || !resRedist.ok) {
+          WaveApp.showToast(`❌ Erro na redistribuição: ${resRedist?.message || 'Falha remota'}`, 'danger');
+          return;
+        }
+      }
+
+      const resInat = await WaveData.inativarMembro(liderInativado.id);
+      if (!resInat || !resInat.ok) {
+        WaveApp.showToast(`❌ Erro ao inativar líder: ${resInat?.message || 'Falha remota'}`, 'danger');
+        return;
+      }
+
+      const total = mapa.length;
+      this._membroParaRedistribuir = null;
+      WaveApp.showToast(`✅ ${total} discípulo(s) redistribuídos e ${liderInativado.nome} inativado com sucesso!`, 'success');
+      WaveApp.renderCurrentPage();
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalBtnText;
+      }
+    }
   },
 
   async confirmarReativacao() {
@@ -1502,12 +1674,15 @@ WavePages['admin-membros'] = {
       tipoEndereco: 'residencial'
     }] : [];
 
-    await WaveData.reativarMembro(this._membroParaReativar.id, novoLider, reativarComoLider, novasCelulas);
-
-    const nome = this._membroParaReativar.nome;
-    this._membroParaReativar = null;
-    WaveApp.showToast(`✅ ${nome} foi reativado(a) com sucesso!`, 'success');
-    WaveApp.renderCurrentPage();
+    const res = await WaveData.reativarMembro(this._membroParaReativar.id, novoLider, reativarComoLider, novasCelulas);
+    if (res && res.ok) {
+      const nome = this._membroParaReativar.nome;
+      this._membroParaReativar = null;
+      WaveApp.showToast(`✅ ${nome} foi reativado(a) com sucesso!`, 'success');
+      WaveApp.renderCurrentPage();
+    } else {
+      WaveApp.showToast(`❌ Falha ao reativar: ${res?.message || 'Erro no banco de dados.'}`, 'danger');
+    }
   },
 
   _salvandoMembro: false,
@@ -1546,6 +1721,12 @@ WavePages['admin-membros'] = {
 
       const idAtual = this._editandoMembro && this._membroDetalhes ? this._membroDetalhes.id : null;
 
+      // Validação obrigatória de Líder Responsável
+      if (!lider || lider === '—' || lider.trim() === '') {
+        await WaveApp.alert('É obrigatório selecionar um Líder Responsável para o discípulo.', 'Líder Obrigatório', 'warning');
+        return;
+      }
+
       // Ponto 16: Validação de Mesmo Sexo entre Líder e Discípulo
       const validacaoSexo = WaveData.validarMesmoSexo(sexo, lider);
       if (!validacaoSexo.ok) {
@@ -1557,8 +1738,47 @@ WavePages['admin-membros'] = {
       if (eLider) {
         const validacaoLideranca = WaveData.validarLideradoVirarLider(lider);
         if (!validacaoLideranca.ok) {
-          await WaveApp.alert(validacaoLideranca.message, 'Célula de Liderança Obrigatória', 'warning');
-          return;
+          const liderObj = WaveData.getMembroByNome(lider);
+          const criarCelula = await WaveApp.confirm(
+            `O líder responsável "${lider}" ainda não possui uma célula de finalidade "Liderança" cadastrada.\n\nDeseja criar a célula de Liderança para "${lider}" agora? O cadastro deste discípulo será concluído logo em seguida.`,
+            'Célula de Liderança Obrigatória',
+            { confirmText: 'Criar Célula de Liderança Agora', cancelText: 'Corrigir o Líder', type: 'warning' }
+          );
+
+          if (criarCelula && liderObj) {
+            // Cria e persiste a célula de liderança no líder diretamente
+            const novasCelulasLider = [
+              ...(liderObj.celulas || []),
+              {
+                id: 'cel-' + Date.now() + '-lid',
+                finalidade: 'Liderança',
+                faixaEtaria: ['Adulto'],
+                diaSemana: 'Terça',
+                horario: '19:30',
+                tipoEndereco: 'residencial',
+                rua: liderObj.rua || '',
+                numero: liderObj.numero || '',
+                bairro: liderObj.bairro || '',
+                cidade: liderObj.cidade || 'Mandaguari',
+                complemento: liderObj.complemento || ''
+              }
+            ];
+
+            const resLider = await WaveData.updateMembro(liderObj.id, {
+              celulas: novasCelulasLider
+            });
+
+            if (resLider && resLider.ok) {
+              WaveApp.showToast(`👑 Célula de Liderança criada para ${liderObj.nome}!`, 'success');
+              // Prossegue normalmente com o salvamento do membro atual
+            } else {
+              WaveApp.showToast(`Falha ao criar célula de Liderança para ${liderObj.nome}: ${resLider?.message || 'Erro no banco.'}`, 'danger');
+              return;
+            }
+          } else {
+            // Permanece no formulário para correção do líder
+            return;
+          }
         }
       }
 
@@ -1603,12 +1823,20 @@ WavePages['admin-membros'] = {
       };
 
       if (this._editandoMembro && this._membroDetalhes) {
-        await WaveData.updateMembro(this._membroDetalhes.id, payload);
+        const res = await WaveData.updateMembro(this._membroDetalhes.id, payload);
+        if (!res.ok) {
+          WaveApp.showToast(`❌ Falha ao atualizar dados de ${nome}: ${res.message}`, 'danger');
+          return;
+        }
         WaveApp.showToast(`✅ Dados de ${nome} atualizados com sucesso!`, 'success');
       } else {
         payload.id = 'm-' + Date.now();
         payload.status = 'ATIVO';
-        await WaveData.addMembro(payload);
+        const res = await WaveData.addMembro(payload);
+        if (!res.ok) {
+          WaveApp.showToast(`❌ Falha ao cadastrar ${nome}: ${res.message}`, 'danger');
+          return;
+        }
         WaveApp.showToast(`✅ Discípulo ${nome} cadastrado com sucesso!`, 'success');
       }
 

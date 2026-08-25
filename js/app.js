@@ -243,7 +243,7 @@ window.WaveApp = {
     toast.className = `toast-notification ${type === 'danger' ? 'danger' : ''}`;
     toast.innerHTML = `
       <i data-lucide="${type === 'danger' ? 'alert-circle' : 'check-circle'}" style="width:18px;height:18px;color:${type === 'danger' ? 'var(--danger)' : 'var(--success)'};"></i>
-      <span>${message}</span>
+      <span>${this.escapeHTML(message)}</span>
     `;
 
     container.appendChild(toast);
@@ -255,6 +255,28 @@ window.WaveApp = {
       toast.style.transform = 'translateX(100%)';
       setTimeout(() => toast.remove(), 300);
     }, 3000);
+  },
+
+  // BUG-07: Sanitização estrita contra XSS
+  escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  },
+
+  // BUG-07: Neutralização de CSV Formula Injection (RFC 4180 + Segurança OWASP)
+  sanitizeCSVCell(val) {
+    if (val === null || val === undefined) return '""';
+    let str = String(val).trim();
+    // Neutraliza fórmulas perigosas (=, +, -, @, \t, \r)
+    if (/^[=+\-@\t\r]/.test(str)) {
+      str = "'" + str;
+    }
+    return `"${str.replace(/"/g, '""')}"`;
   },
 
   dialog({

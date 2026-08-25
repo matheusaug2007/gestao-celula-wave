@@ -90,17 +90,17 @@ WavePages.importacao = {
               <tbody>
                 ${this._rowsPreview.map((r, idx) => `
                   <tr>
-                    <td>#${idx + 1}</td>
-                    <td><strong>${r.nome || '—'}</strong></td>
-                    <td>${r.whatsapp || '—'}</td>
-                    <td>${r.dataNascimento || '—'}</td>
-                    <td>${r.liderResponsavel || '—'}</td>
+                    <td>Linha ${r.linhaNum || (idx + 2)}</td>
+                    <td><strong>${WaveApp.escapeHTML(r.nome) || '—'}</strong></td>
+                    <td>${WaveApp.escapeHTML(r.whatsapp) || '—'}</td>
+                    <td>${WaveApp.escapeHTML(r.dataNascimento) || '—'}</td>
+                    <td>${WaveApp.escapeHTML(r.liderResponsavel) || '—'}</td>
                     <td>${r.eLider ? '<span style="color:var(--warning);font-weight:700;">👑 Líder</span>' : 'Discípulo'}</td>
                     <td>
                       ${r.valido ? `
                         <span class="status-badge-ativo">Pronto para importar</span>
                       ` : `
-                        <span class="status-badge-inativo">${r.erro}</span>
+                        <span class="status-badge-inativo">${WaveApp.escapeHTML(r.erro)}</span>
                       `}
                     </td>
                   </tr>
@@ -117,74 +117,267 @@ WavePages.importacao = {
     const file = event.target.files[0];
     if (!file) return;
 
+    // Validação básica de tamanho (ex: max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      WaveApp.showToast('O arquivo CSV selecionado é muito grande (máximo 10MB).', 'danger');
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target.result;
       this.processCSVText(text);
     };
-    reader.readAsText(file);
+    reader.readAsText(file, 'UTF-8');
+  },
+
+  // Normaliza qualquer formato de data (DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD) para ISO YYYY-MM-DD
+  normalizarDataParaISO(str) {
+    if (!str || typeof str !== 'string') return null;
+    const clean = str.trim();
+    if (!clean) return null;
+
+    // Já é YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
+
+    // DD/MM/YYYY ou DD-MM-YYYY
+    const brMatch = clean.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (brMatch) {
+      const dia = brMatch[1].padStart(2, '0');
+      const mes = brMatch[2].padStart(2, '0');
+      const ano = brMatch[3];
+      return `${ano}-${mes}-${dia}`;
+    }
+
+    // YYYY/MM/DD
+    const isoSlashMatch = clean.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+    if (isoSlashMatch) {
+      const ano = isoSlashMatch[1];
+      const mes = isoSlashMatch[2].padStart(2, '0');
+      const dia = isoSlashMatch[3].padStart(2, '0');
+      return `${ano}-${mes}-${dia}`;
+    }
+
+    return null;
+  },
+
+  // BUG-06: Parser CSV completo compatível com RFC 4180
+  parseCSV(text) {
+    if (!text) return { rows: [], errors: [], delimiter: ';' };
+
+    // 1. Remove UTF-8 BOM se presente
+    if (text.charCodeAt(0) === 0xFEFF) {
+      text = text.slice(1);
+    }
+
+    // 2. Detecta delimitador analisando a primeira linha fora de aspas
+    let delimiter = ';';
+    let inQuotesDetect = false;
+    let countSemi = 0;
+    let countComma = 0;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (c === '"') inQuotesDetect = !inQuotesDetect;
+      else if (!inQuotesDetect) {
+        if (c === ';') countSemi++;
+        else if (c === ',') countComma++;
+        else if (c === '\n' || c === '\r') break;
+      }
+    }
+    if (countComma > countSemi) delimiter = ',';
+
+    // 3. State-machine parser RFC 4180
+    const rows = [];
+    const errors = [];
+    let currentRow = [];
+    let currentField = '';
+    let inQuote = false;
+    let lineNumber = 1;
+    let quoteStartLine = 1;
+
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const nextChar = text[i + 1];
+
+      if (char === '"') {
+        if (inQuote) {
+          if (nextChar === '"') {
+            // Aspa escapada: ""
+            currentField += '"';
+            i++;
+          } else {
+            // Fecha aspas
+            inQuote = false;
+          }
+        } else {
+          // Abre aspas
+          inQuote = true;
+          quoteStartLine = lineNumber;
+        }
+      } else if (char === delimiter && !inQuote) {
+        // Fim de coluna
+        currentRow.push(currentField.trim());
+        currentField = '';
+      } else if ((char === '\r' || char === '\n') && !inQuote) {
+        if (char === '\r' && nextChar === '\n') {
+          i++;
+        }
+        currentRow.push(currentField.trim());
+        currentField = '';
+
+        // Ignora linhas vazias ou linhas apenas com delimitadores e espaços (ex: ;;;;;;;)
+        const hasContent = currentRow.some(f => f.replace(/^["'\s]+|["'\s]+$/g, '').trim() !== '');
+        if (hasContent) {
+          rows.push({ lineNumber, cols: currentRow });
+        }
+        currentRow = [];
+        lineNumber++;
+      } else {
+        if (char === '\n') lineNumber++;
+        currentField += char;
+      }
+    }
+
+    if (currentField.length > 0 || currentRow.length > 0) {
+      currentRow.push(currentField.trim());
+      const hasContent = currentRow.some(f => f.replace(/^["'\s]+|["'\s]+$/g, '').trim() !== '');
+      if (hasContent) {
+        rows.push({ lineNumber, cols: currentRow });
+      }
+    }
+
+    if (inQuote) {
+      errors.push({
+        lineNumber: quoteStartLine,
+        message: `Aspas abertas na linha ${quoteStartLine} não foram fechadas corretamente.`
+      });
+    }
+
+    return { rows, errors, delimiter };
   },
 
   processCSVText(text) {
-    const lines = text.split(/\r\n|\n/).filter(l => l.trim() !== '');
-    if (lines.length <= 1) {
-      WaveApp.showToast('O arquivo CSV está vazio ou contém apenas o cabeçalho.', 'danger');
+    const { rows, errors, delimiter } = this.parseCSV(text);
+
+    if (errors.length > 0) {
+      WaveApp.showToast(`❌ Erro no formato do CSV: ${errors[0].message}`, 'danger');
       return;
     }
 
-    const delimiter = lines[0].includes(';') ? ';' : ',';
+    if (rows.length <= 1) {
+      WaveApp.showToast('O arquivo CSV está vazio ou contém apenas o cabeçalho.', 'danger');
+      return;
+    }
 
     this._rowsPreview = [];
     this._validCount = 0;
     this._errorCount = 0;
 
-    // Primeira extração dos objetos para permitir cruzamento entre linhas do CSV
-    const parsedRowsRaw = [];
-    for (let i = 1; i < lines.length; i++) {
-      const cols = lines[i].split(delimiter).map(c => c.trim().replace(/^"|"$/g, ''));
-      if (cols.length < 2) continue;
+    // Validação do cabeçalho
+    const headerCols = rows[0].cols.map(c => c.toLowerCase().trim());
+    const hasHeaderNome = headerCols.some(c => c.includes('nome'));
+    const startIndex = hasHeaderNome ? 1 : 0;
 
-      parsedRowsRaw.push({
-        nome: cols[0] || '',
-        whatsapp: cols[1] || '',
-        dataNascimento: cols[2] || '',
-        dataIngresso: cols[3] || new Date().toISOString().split('T')[0],
-        tipoIngresso: cols[4] || 'Recepção',
-        sexo: (cols[5] || 'FEMININO').toUpperCase(),
-        rua: cols[6] || '',
-        numero: cols[7] || '',
-        bairro: cols[8] || '',
-        cidade: cols[9] || 'Mandaguari',
-        complemento: cols[10] || '',
-        liderResponsavel: cols[11] || '—',
+    // Função auxiliar para sanitizar tamanho e neutralizar fórmulas perigosas
+    const sanitizeField = (val, maxLen = 120) => {
+      if (!val) return '';
+      let s = String(val).trim();
+      // Remove aspas externas residuais
+      s = s.replace(/^"|"$/g, '');
+      // Remove caracteres de controle ou início de fórmula maliciosa
+      if (/^[=+\-@\t\r]/.test(s)) {
+        s = s.replace(/^[=+\-@\t\r]+/, '');
+      }
+      if (s.length > maxLen) {
+        s = s.substring(0, maxLen);
+      }
+      return s;
+    };
+
+    // Primeira extração das linhas
+    const parsedRowsRaw = [];
+    for (let i = startIndex; i < rows.length; i++) {
+      const { lineNumber, cols } = rows[i];
+
+      // Ignora se todos os campos da linha forem vazios
+      const hasAnyField = cols.some(c => c && c.trim() !== '');
+      if (!hasAnyField) continue;
+
+      if (cols.length < 2) {
+        parsedRowsRaw.push({
+          linhaNum: lineNumber,
+          nome: '',
+          valido: false,
+          erro: 'Linha com número insuficiente de colunas'
+        });
+        continue;
+      }
+
+      const rawNome = sanitizeField(cols[0], 120);
+      const rawNasc = sanitizeField(cols[2], 20);
+      const rawIngresso = sanitizeField(cols[3], 20);
+
+      const dataNascISO = this.normalizarDataParaISO(rawNasc);
+      const dataIngressoISO = this.normalizarDataParaISO(rawIngresso) || new Date().toISOString().split('T')[0];
+
+      const rowObj = {
+        linhaNum: lineNumber,
+        nome: rawNome,
+        whatsapp: sanitizeField(cols[1], 30),
+        dataNascimento: dataNascISO || rawNasc,
+        dataIngresso: dataIngressoISO,
+        tipoIngresso: sanitizeField(cols[4], 40) || 'Recepção',
+        sexo: (sanitizeField(cols[5], 20) || 'FEMININO').toUpperCase(),
+        rua: sanitizeField(cols[6], 150),
+        numero: sanitizeField(cols[7], 20),
+        bairro: sanitizeField(cols[8], 100),
+        cidade: sanitizeField(cols[9], 80) || 'Mandaguari',
+        complemento: sanitizeField(cols[10], 150),
+        liderResponsavel: sanitizeField(cols[11], 120) || '—',
         eLider: (cols[12] || '').toLowerCase() === 'sim' || (cols[12] || '').toLowerCase() === 'true',
-        finalidadeCelula: cols[13] || 'Evangelística',
-        faixaEtariaCelula: cols[14] || 'Adulto',
-        diaCelula: cols[15] || 'Quinta',
-        horarioCelula: cols[16] || '20:00',
-        tipoEnderecoCelula: cols[17] || 'residencial',
-        ruaCelula: cols[18] || '',
-        numeroCelula: cols[19] || '',
-        bairroCelula: cols[20] || '',
-        cidadeCelula: cols[21] || 'Mandaguari',
+        finalidadeCelula: sanitizeField(cols[13], 50) || 'Evangelística',
+        faixaEtariaCelula: sanitizeField(cols[14], 50) || 'Adulto',
+        diaCelula: sanitizeField(cols[15], 30) || 'Quinta',
+        horarioCelula: sanitizeField(cols[16], 20) || '20:00',
+        tipoEnderecoCelula: sanitizeField(cols[17], 30) || 'residencial',
+        ruaCelula: sanitizeField(cols[18], 150),
+        numeroCelula: sanitizeField(cols[19], 20),
+        bairroCelula: sanitizeField(cols[20], 100),
+        cidadeCelula: sanitizeField(cols[21], 80) || 'Mandaguari',
         valido: true,
         erro: ''
-      });
+      };
+
+      if (!rawNome) {
+        rowObj.valido = false;
+        rowObj.erro = 'Nome obrigatório ausente';
+      } else if (!rawNasc) {
+        rowObj.valido = false;
+        rowObj.erro = 'Data de Nascimento ausente';
+      } else if (!dataNascISO) {
+        rowObj.valido = false;
+        rowObj.erro = 'Data de Nasc. inválida (use AAAA-MM-DD ou DD/MM/AAAA)';
+      }
+
+      parsedRowsRaw.push(rowObj);
     }
 
-    // Segunda passagem: validações de campos, duplicata e consistência de gênero
+    // Segunda passagem: validações de regras de negócio
     for (const obj of parsedRowsRaw) {
-      if (!obj.nome) {
+      if (!obj.valido) {
+        this._errorCount++;
+        this._rowsPreview.push(obj);
+        continue;
+      }
+
+      if (!obj.eLider && (!obj.liderResponsavel || obj.liderResponsavel === '—' || obj.liderResponsavel.trim() === '')) {
         obj.valido = false;
-        obj.erro = 'Nome obrigatório ausente';
-      } else if (!obj.dataNascimento) {
-        obj.valido = false;
-        obj.erro = 'Data de Nascimento ausente';
+        obj.erro = 'Líder Responsável obrigatório';
       } else if (WaveData.isDuplicado(obj.nome, obj.dataNascimento)) {
         obj.valido = false;
         obj.erro = 'Já cadastrado no banco';
       } else if (obj.liderResponsavel && obj.liderResponsavel !== '—') {
-        // Validação de consistência de gênero entre Líder e Discípulo (Ponto 16 / v1.2)
+        // Validação de consistência de gênero entre Líder e Discípulo (Ponto 16)
         let liderEncontrado = WaveData.getMembroByNome(obj.liderResponsavel);
         if (!liderEncontrado) {
           const liderNoCsv = parsedRowsRaw.find(r => r.eLider && r.nome && (
@@ -214,7 +407,7 @@ WavePages.importacao = {
 
     this._fileLoaded = true;
     WaveApp.renderCurrentPage();
-    WaveApp.showToast(`📊 CSV processado: ${this._validCount} válidos, ${this._errorCount} com erros.`, 'success');
+    WaveApp.showToast(`📊 CSV processado (${delimiter === ';' ? 'Ponto e vírgula' : 'Vírgula'}): ${this._validCount} válidos, ${this._errorCount} com pendências.`, 'success');
   },
 
   async confirmarImportacao() {
@@ -223,6 +416,10 @@ WavePages.importacao = {
     if (validRows.length === 0) return;
 
     WaveApp.showToast('🔄 Importando registros no Supabase...', 'warning');
+
+    let sucessos = 0;
+    let falhas = 0;
+    let ultimaFalhaMsg = '';
 
     // 1ª Passagem: Agrupar e cadastrar líderes com suas células
     const lideresMap = new Map();
@@ -249,7 +446,7 @@ WavePages.importacao = {
     });
 
     for (const [key, l] of lideresMap.entries()) {
-      await WaveData.addMembro({
+      const res = await WaveData.addMembro({
         nome: l.nome,
         whatsapp: l.whatsapp,
         dataNascimento: l.dataNascimento,
@@ -266,12 +463,19 @@ WavePages.importacao = {
         celulas: l.celulas,
         status: 'ATIVO'
       });
+
+      if (res && res.ok) {
+        sucessos++;
+      } else {
+        falhas++;
+        ultimaFalhaMsg = res?.message || 'Falha ao salvar líder.';
+      }
     }
 
     // 2ª Passagem: Cadastrar discípulos comuns
     const membrosComuns = validRows.filter(r => !r.eLider);
     for (const r of membrosComuns) {
-      await WaveData.addMembro({
+      const res = await WaveData.addMembro({
         nome: r.nome,
         whatsapp: r.whatsapp,
         dataNascimento: r.dataNascimento,
@@ -288,13 +492,29 @@ WavePages.importacao = {
         celulas: [],
         status: 'ATIVO'
       });
+
+      if (res && res.ok) {
+        sucessos++;
+      } else {
+        falhas++;
+        ultimaFalhaMsg = res?.message || 'Falha ao salvar discípulo.';
+      }
     }
 
     await WaveData.syncSupabase();
 
-    WaveApp.showToast(`✅ ${validRows.length} registro(s) importado(s) com sucesso!`, 'success');
-    this._fileLoaded = false;
-    this._rowsPreview = [];
-    WaveApp.navigate('admin-membros');
+    if (falhas === 0) {
+      WaveApp.showToast(`✅ ${sucessos} registro(s) importado(s) com sucesso!`, 'success');
+      this._fileLoaded = false;
+      this._rowsPreview = [];
+      WaveApp.navigate('admin-membros');
+    } else {
+      WaveApp.showToast(`⚠️ Importação finalizada: ${sucessos} importados, ${falhas} falhas. (${ultimaFalhaMsg})`, 'danger');
+      if (sucessos > 0) {
+        this._fileLoaded = false;
+        this._rowsPreview = [];
+        WaveApp.navigate('admin-membros');
+      }
+    }
   }
 };

@@ -18,7 +18,7 @@ window.supabaseInitPromise = (async function initSupabase() {
       });
     }
 
-    // 2. Busca as credenciais seguras da Netlify Function (sem expor no código)
+    // 2. Busca as credenciais seguras da Netlify Function
     let url = '';
     let key = '';
 
@@ -30,7 +30,6 @@ window.supabaseInitPromise = (async function initSupabase() {
         key = cfg.supabaseAnonKey;
       }
     } catch (e) {
-      console.warn('Tentando rota direta de functions...');
       try {
         const fallbackRes = await fetch('/.netlify/functions/config');
         if (fallbackRes.ok) {
@@ -41,16 +40,27 @@ window.supabaseInitPromise = (async function initSupabase() {
       } catch (err) {}
     }
 
+    // 2.1 Fallback inteligente para desenvolvimento local (Live Server / localhost)
+    const isLocal = window.location.hostname === 'localhost' || 
+                    window.location.hostname === '127.0.0.1' || 
+                    window.location.protocol === 'file:';
+
+    if ((!url || !key) && isLocal) {
+      console.info('ℹ️ Modo de Desenvolvimento Local detectado (Live Server). Usando fallback de conexão.');
+      url = 'https://dkdtgdmcmvofolukynri.supabase.co';
+      key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrZHRnZG1jbXZvZm9sdWt5bnJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2MTU5NjYsImV4cCI6MjEwMjE5MTk2Nn0.Ond6uL_hhHjuDm_xdNn6PsPB2q6Gw_JgDdO45tAeT5c';
+    }
+
     // 3. Inicializa o cliente do Supabase com as credenciais obtidas
     if (url && key && window.supabase && window.supabase.createClient) {
       window.supabaseClient = window.supabase.createClient(url, key);
-      console.log('✅ Supabase conectado com sucesso via Netlify Environment Variables!');
+      console.log('✅ Supabase conectado com sucesso!');
       if (window.WaveData && window.WaveData.syncSupabase) {
         window.WaveData.syncSupabase();
       }
       return window.supabaseClient;
     } else {
-      console.warn('⚠️ Supabase: Credenciais não retornadas pelo endpoint da nuvem.');
+      console.warn('⚠️ Supabase: Credenciais não retornadas.');
       return null;
     }
   } catch (error) {
@@ -111,6 +121,25 @@ window.WaveSupabase = {
     } catch (e) {
       console.error('Erro de conexão ao atualizar pessoa no Supabase:', e);
       return null;
+    }
+  },
+
+  async updatePessoasLider(ids, novoLiderNome, novoLiderId = null) {
+    if (!window.supabaseClient || !ids || ids.length === 0) return true;
+    try {
+      const payload = { lider: novoLiderNome };
+      if (novoLiderId) {
+        payload.discipulador_id = novoLiderId;
+      }
+      const { error } = await supabaseClient.from('pessoas').update(payload).in('id', ids);
+      if (error) {
+        console.error('Erro ao atualizar lote de discípulos no Supabase:', error);
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.error('Erro de conexão no lote do Supabase:', e);
+      return false;
     }
   }
 };
