@@ -3,3 +3,8 @@
 .DS_Store
 Thumbs.db
 .agents/
+
+# Env e segredos
+.env
+.env.*
+.supabase.json

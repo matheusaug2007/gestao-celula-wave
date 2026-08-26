@@ -46,9 +46,9 @@ window.supabaseInitPromise = (async function initSupabase() {
                     window.location.protocol === 'file:';
 
     if ((!url || !key) && isLocal) {
-      console.info('ℹ️ Modo de Desenvolvimento Local detectado (Live Server). Usando fallback de conexão.');
-      url = 'https://dkdtgdmcmvofolukynri.supabase.co';
-      key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrZHRnZG1jbXZvZm9sdWt5bnJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2MTU5NjYsImV4cCI6MjEwMjE5MTk2Nn0.Ond6uL_hhHjuDm_xdNn6PsPB2q6Gw_JgDdO45tAeT5c';
+      console.info('ℹ️ Modo de Desenvolvimento Local detectado (Live Server).');
+      url = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || '';
+      key = window.SUPABASE_ANON_KEY || localStorage.getItem('SUPABASE_ANON_KEY') || '';
     }
 
     // 3. Inicializa o cliente do Supabase com as credenciais obtidas
