@@ -65,6 +65,9 @@ WavePages['admin-usuarios'] = {
   },
 
   async fetchUsuariosSupabase() {
+    if (!window.supabaseClient && window.supabaseInitPromise) {
+      await window.supabaseInitPromise;
+    }
     if (window.supabaseClient) {
       try {
         const { data, error } = await supabaseClient.from('usuarios').select('*').order('nome', { ascending: true });
@@ -123,11 +126,11 @@ WavePages['admin-usuarios'] = {
                 <i data-lucide="edit-2" style="width:16px;height:16px;"></i>
               </button>
               ${!isSelf ? `
-                <button class="btn btn-ghost" onclick="WavePages['admin-usuarios'].toggleStatus('${u.id}')" title="${u.ativo ? 'Bloquear Acesso' : 'Liberar Acesso'}" style="padding:6px;color:${u.ativo ? 'var(--danger)' : 'var(--success)'};">
-                  <i data-lucide="${u.ativo ? 'shield-ban' : 'shield-check'}" style="width:16px;height:16px;"></i>
+                <button class="btn btn-ghost" onclick="WavePages['admin-usuarios'].excluirUsuario('${u.id}')" title="Excluir Administrador" style="padding:6px;color:var(--danger);">
+                  <i data-lucide="trash-2" style="width:16px;height:16px;"></i>
                 </button>
               ` : `
-                <span style="font-size:0.75rem;color:var(--text-tertiary);padding:6px;" title="Você não pode bloquear o seu próprio usuário administrador">
+                <span style="font-size:0.75rem;color:var(--text-tertiary);padding:6px;" title="Você não pode excluir o seu próprio usuário administrador">
                   (Seu Acesso)
                 </span>
               `}
@@ -177,8 +180,8 @@ WavePages['admin-usuarios'] = {
               <i data-lucide="edit-2" style="width:16px;height:16px;"></i>
             </button>
             ${!isSelf ? `
-              <button class="btn btn-ghost" onclick="WavePages['admin-usuarios'].toggleStatus('${u.id}')" title="${u.ativo ? 'Bloquear Acesso' : 'Liberar Acesso'}" style="padding:8px;color:${u.ativo ? 'var(--danger)' : 'var(--success)'};">
-                <i data-lucide="${u.ativo ? 'shield-ban' : 'shield-check'}" style="width:16px;height:16px;"></i>
+              <button class="btn btn-ghost" onclick="WavePages['admin-usuarios'].excluirUsuario('${u.id}')" title="Excluir Administrador" style="padding:8px;color:var(--danger);">
+                <i data-lucide="trash-2" style="width:16px;height:16px;"></i>
               </button>
             ` : ''}
           </div>
@@ -489,34 +492,45 @@ WavePages['admin-usuarios'] = {
     }
   },
 
-  async toggleStatus(userId) {
+  async excluirUsuario(userId) {
     const u = this._usuariosList.find(item => item.id === userId);
     if (!u) return;
 
-    // Regra Ponto 15: Proteger contra auto-bloqueio
+    // Regra: Proteger contra auto-exclusão
     const currentLoggedIn = WaveAuth.getUser();
     if (currentLoggedIn && (currentLoggedIn.id === u.id || (currentLoggedIn.email && currentLoggedIn.email.toLowerCase() === u.email.toLowerCase()))) {
-      await WaveApp.alert('Operação não permitida: Você não pode bloquear o seu próprio usuário administrador.', 'Ação Bloqueada', 'warning');
+      await WaveApp.alert('Operação não permitida: Você não pode excluir o seu próprio usuário administrador.', 'Ação Bloqueada', 'warning');
       return;
     }
 
-    u.ativo = !u.ativo;
-    const statusTxt = u.ativo ? 'LIBERADO' : 'BLOQUEADO';
+    const confirmar = await WaveApp.confirm(
+      `Deseja realmente excluir o acesso do administrador "${u.nome}" (${u.email})?\n\nEsta ação não poderá ser desfeita.`,
+      'Excluir Administrador',
+      {
+        confirmText: 'Sim, Excluir',
+        cancelText: 'Cancelar',
+        type: 'danger',
+        danger: true
+      }
+    );
 
-    // Regra Ponto 15: Kill de sessão ao bloquear usuário
-    if (!u.ativo) {
-      WaveAuth.killSessionIfCurrentUser(u.id, u.email);
-    }
+    if (!confirmar) return;
 
     if (window.supabaseClient) {
       try {
-        await supabaseClient.from('usuarios').update({ ativo: u.ativo }).eq('id', u.id);
+        const { error } = await supabaseClient.from('usuarios').delete().eq('id', u.id);
+        if (error) {
+          console.warn('Supabase delete usuário erro:', error);
+        }
       } catch (err) {
-        console.warn('Supabase update status erro:', err);
+        console.warn('Supabase delete usuário erro:', err);
       }
     }
 
-    WaveApp.showToast(`Acesso de ${u.nome} alterado para ${statusTxt}`, u.ativo ? 'success' : 'danger');
+    WaveAuth.killSessionIfCurrentUser(u.id, u.email);
+
+    this._usuariosList = this._usuariosList.filter(item => item.id !== userId);
+    WaveApp.showToast(`Administrador ${u.nome} excluído com sucesso!`, 'success');
     this.renderListsLive();
   },
 

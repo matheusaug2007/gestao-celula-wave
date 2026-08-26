@@ -40,13 +40,23 @@ window.supabaseInitPromise = (async function initSupabase() {
       } catch (err) {}
     }
 
-    // 2.1 Fallback inteligente para desenvolvimento local (Live Server / localhost)
+    // 2.1 Fallback seguro para desenvolvimento local (Live Server / localhost)
     const isLocal = window.location.hostname === 'localhost' || 
                     window.location.hostname === '127.0.0.1' || 
                     window.location.protocol === 'file:';
 
     if ((!url || !key) && isLocal) {
-      console.info('ℹ️ Modo de Desenvolvimento Local detectado (Live Server).');
+      // Tenta carregar do script local se existir
+      if (!window.SUPABASE_URL && !window.SUPABASE_ANON_KEY) {
+        await new Promise((resolve) => {
+          const script = document.createElement('script');
+          script.src = 'config.local.js';
+          script.onload = resolve;
+          script.onerror = () => resolve(); // se não existir, segue sem erro
+          document.head.appendChild(script);
+        });
+      }
+
       url = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || '';
       key = window.SUPABASE_ANON_KEY || localStorage.getItem('SUPABASE_ANON_KEY') || '';
     }
@@ -72,11 +82,19 @@ window.supabaseInitPromise = (async function initSupabase() {
 window.WaveSupabase = {
   active: true,
 
+  async _ensureClient() {
+    if (!window.supabaseClient && window.supabaseInitPromise) {
+      await window.supabaseInitPromise;
+    }
+    return window.supabaseClient;
+  },
+
   // 1. Membros & Líderes (pessoas)
   async fetchPessoas() {
-    if (!window.supabaseClient) return [];
+    const client = await this._ensureClient();
+    if (!client) return [];
     try {
-      const { data, error } = await supabaseClient.from('pessoas').select('*');
+      const { data, error } = await client.from('pessoas').select('*');
       if (error) throw error;
       return data || [];
     } catch (e) {
@@ -86,12 +104,13 @@ window.WaveSupabase = {
   },
 
   async addPessoa(pessoa) {
-    if (!window.supabaseClient) {
+    const client = await this._ensureClient();
+    if (!client) {
       console.warn('Supabase client não está inicializado.');
       return null;
     }
     try {
-      const { data, error } = await supabaseClient.from('pessoas').insert([pessoa]).select();
+      const { data, error } = await client.from('pessoas').insert([pessoa]).select();
       if (error) {
         console.error('Erro ao salvar pessoa no Supabase:', error);
         if (window.WaveApp && window.WaveApp.showToast) {
@@ -107,9 +126,10 @@ window.WaveSupabase = {
   },
 
   async updatePessoa(id, dados) {
-    if (!window.supabaseClient) return null;
+    const client = await this._ensureClient();
+    if (!client) return null;
     try {
-      const { data, error } = await supabaseClient.from('pessoas').update(dados).eq('id', id).select();
+      const { data, error } = await client.from('pessoas').update(dados).eq('id', id).select();
       if (error) {
         console.error('Erro ao atualizar pessoa no Supabase:', error);
         if (window.WaveApp && window.WaveApp.showToast) {
@@ -125,13 +145,14 @@ window.WaveSupabase = {
   },
 
   async updatePessoasLider(ids, novoLiderNome, novoLiderId = null) {
-    if (!window.supabaseClient || !ids || ids.length === 0) return true;
+    const client = await this._ensureClient();
+    if (!client || !ids || ids.length === 0) return true;
     try {
       const payload = { lider: novoLiderNome };
       if (novoLiderId) {
         payload.discipulador_id = novoLiderId;
       }
-      const { error } = await supabaseClient.from('pessoas').update(payload).in('id', ids);
+      const { error } = await client.from('pessoas').update(payload).in('id', ids);
       if (error) {
         console.error('Erro ao atualizar lote de discípulos no Supabase:', error);
         return false;

@@ -635,6 +635,19 @@ window.WaveData = {
       };
     }
 
+    // Se for a última célula de Liderança e o líder possuir discípulos líderes:
+    if (celulaParaFechar.finalidade === 'Liderança') {
+      const celulasLidRestantes = (lider.celulas || []).filter(c => c.finalidade === 'Liderança' && c.id !== celulaId);
+      const discipulosLideres = this.membros.filter(m => m.lider === lider.nome && m.eLider && (m.status || 'ATIVO') === 'ATIVO');
+      if (celulasLidRestantes.length === 0 && discipulosLideres.length > 0) {
+        const nomes = discipulosLideres.map(d => d.nome).join(', ');
+        return {
+          ok: false,
+          message: `Não é possível encerrar a célula de Liderança de "${lider.nome}", pois ele(a) discipula ${discipulosLideres.length} discípulo(s) que lideram células (${nomes}).\n\nPara encerrar esta célula, primeiro altere a liderança desses discípulos ou desmarque-os como líderes.`
+        };
+      }
+    }
+
     const novasCelulas = lider.celulas.filter((_, idx) => idx !== celulaIndex);
 
     if (window.WaveSupabase && window.supabaseClient) {

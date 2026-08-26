@@ -673,9 +673,9 @@
   background: #141417;
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-2xl);
-  max-width: 400px;
+  max-width: 440px;
   width: 100%;
-  padding: 28px 22px 22px 22px;
+  padding: 28px 24px 24px 24px;
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
@@ -751,7 +751,7 @@
   color: var(--text-secondary);
   line-height: 1.55;
   margin: 0;
-  max-width: 340px;
+  max-width: 380px;
   word-break: break-word;
   white-space: pre-line;
 }
@@ -778,15 +778,22 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .wave-dialog-actions.dual .wave-dialog-btn {
   width: 100%;
   min-height: 44px;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   font-weight: 700;
   justify-content: center;
   border-radius: var(--radius-lg);
+  white-space: normal;
+  line-height: 1.25;
+  padding: 10px 12px;
+  text-align: center;
+  box-sizing: border-box;
 }
 
 .wave-dialog-btn-danger {

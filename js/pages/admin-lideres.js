@@ -611,9 +611,11 @@ WavePages['admin-lideres'] = {
                 <span class="badge ${c.finalidade === 'Liderança' ? 'badge-warning' : 'badge-white'}" style="font-size:0.75rem;font-weight:700;">
                   ${c.finalidade}
                 </span>
-                <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
-                  ${WaveData.renderFaixaEtariaBadges(c.faixaEtaria, 'font-size:0.7rem;')}
-                </div>
+                ${c.finalidade !== 'Liderança' ? `
+                  <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
+                    ${WaveData.renderFaixaEtariaBadges(c.faixaEtaria, 'font-size:0.7rem;')}
+                  </div>
+                ` : ''}
               </div>
               
               <div style="color:var(--white);font-weight:600;font-size:0.85rem;margin-top:2px;">
@@ -666,8 +668,11 @@ WavePages['admin-lideres'] = {
                 <span class="badge ${c.finalidade === 'Liderança' ? 'badge-warning' : 'badge-white'}" style="font-size:0.6rem;padding:1px 4px;">${c.finalidade}</span>
               </div>
               <div style="display:flex;align-items:center;gap:4px;margin-top:4px;flex-wrap:wrap;">
-                <span style="font-size:0.72rem;color:var(--text-tertiary);margin-right:2px;">${c.diaSemana} às ${c.horario} ·</span>
-                ${WaveData.renderFaixaEtariaBadges(c.faixaEtaria, 'font-size:0.62rem;padding:1px 6px;')}
+                <span style="font-size:0.72rem;color:var(--text-tertiary);margin-right:2px;">${c.diaSemana} às ${c.horario}</span>
+                ${c.finalidade !== 'Liderança' ? `
+                  <span>·</span>
+                  ${WaveData.renderFaixaEtariaBadges(c.faixaEtaria, 'font-size:0.62rem;padding:1px 6px;')}
+                ` : ''}
               </div>
             </div>
           </div>
@@ -829,6 +834,21 @@ WavePages['admin-lideres'] = {
     if (celula.finalidade === 'Evangelística' && celulasEvangRestantes.length === 0) {
       await WaveApp.alert('Todo líder precisa de ao menos 1 célula Evangelística ativa.\n\nCaso este líder não vá mais liderar nenhuma célula, realize a inativação do próprio líder pela tela de Membros.', 'Encerramento Bloqueado', 'warning');
       return;
+    }
+
+    // Regra: Bloqueio de encerramento de célula de Liderança se houver discípulos líderes
+    if (celula.finalidade === 'Liderança') {
+      const celulasLidRestantes = (lider.celulas || []).filter(c => c.finalidade === 'Liderança' && c.id !== celulaId);
+      const discipulosLideres = WaveData.membros.filter(m => m.lider === lider.nome && m.eLider && (m.status || 'ATIVO') === 'ATIVO');
+      if (celulasLidRestantes.length === 0 && discipulosLideres.length > 0) {
+        const nomes = discipulosLideres.map(d => d.nome).join(', ');
+        await WaveApp.alert(
+          `Não é possível encerrar a célula de Liderança de "${lider.nome}", pois ele(a) discipula ${discipulosLideres.length} discípulo(s) que lideram células:\n\n• ${nomes}\n\nPara encerrar esta célula, primeiro altere o líder responsável desses discípulos ou desmarque-os como líderes.`,
+          'Célula de Liderança em Uso',
+          'warning'
+        );
+        return;
+      }
     }
 
     const confirmar = await WaveApp.confirm(`Deseja realmente encerrar a Célula ${celula.finalidade} (${celula.diaSemana} às ${celula.horario}) de ${lider.nome}?`, 'Encerrar Célula', {

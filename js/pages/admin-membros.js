@@ -25,6 +25,7 @@ WavePages['admin-membros'] = {
   _membroParaReativar: null,
   _confirmacaoTrocaLider: null,
   _pendingFormState: null, // BUG-02: preserva dados do form durante fluxo auxiliar de célula
+  _modalLiderancaData: null, // Modal de criação de célula de liderança do líder
 
   // Paginação e Ordenação
   _pageSize: 50,
@@ -771,9 +772,11 @@ WavePages['admin-membros'] = {
                           <div style="padding:8px;background:var(--bg-card);border-radius:var(--radius-sm);font-size:0.8rem;border:1px solid var(--border-subtle);">
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:6px;">
                               <strong style="color:var(--white);">Célula ${i + 1} — ${c.finalidade}</strong>
-                              <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
-                                ${WaveData.renderFaixaEtariaBadges(c.faixaEtaria, 'font-size:0.65rem;')}
-                              </div>
+                              ${c.finalidade !== 'Liderança' ? `
+                                <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
+                                  ${WaveData.renderFaixaEtariaBadges(c.faixaEtaria, 'font-size:0.65rem;')}
+                                </div>
+                              ` : ''}
                             </div>
                             <div style="color:var(--text-secondary);font-size:0.75rem;">
                               📅 <strong>${c.diaSemana}</strong> às <strong>${c.horario}</strong>
@@ -917,6 +920,121 @@ WavePages['admin-membros'] = {
               </div>
             </div>
           ` : ''}
+        </div>
+      </div>
+
+      <!-- Modal: Cadastro de Célula de Liderança do Líder Responsável -->
+      <div class="modal-overlay ${this._modalLiderancaData ? 'open' : ''}" style="z-index: 100000;" onclick="WavePages['admin-membros'].fecharModalLiderancaOutside(event)">
+        <div class="modal-sheet" style="max-height:88vh;display:flex;flex-direction:column;max-width:580px;padding:var(--space-xl) var(--space-xl) var(--space-md) var(--space-xl);">
+          <div class="sheet-handle"></div>
+          <div class="sheet-header" style="margin-bottom:var(--space-sm);">
+            <h3 class="sheet-title" style="color:var(--warning);display:flex;align-items:center;gap:6px;">
+              👑 Cadastrar Célula de Liderança
+            </h3>
+            <button class="sheet-close" onclick="WavePages['admin-membros'].cancelarModalLideranca()">
+              <i data-lucide="x" style="width:18px;height:18px;"></i>
+            </button>
+          </div>
+
+          ${this._modalLiderancaData ? (() => {
+            const { liderObj, membroDraftPayload } = this._modalLiderancaData;
+            return `
+              <form onsubmit="WavePages['admin-membros'].salvarModalLiderancaSubmit(event)" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
+                <div style="display:flex;flex-direction:column;gap:var(--space-md);overflow-y:auto;padding-right:6px;flex:1;padding-bottom:var(--space-md);">
+                  
+                  <div style="background:rgba(234, 179, 8, 0.12);border:1px solid rgba(234, 179, 8, 0.35);color:var(--white);padding:10px 14px;border-radius:var(--radius-md);font-size:0.82rem;display:flex;align-items:flex-start;gap:8px;">
+                    <i data-lucide="info" style="width:18px;height:18px;color:var(--warning);flex-shrink:0;margin-top:2px;"></i>
+                    <span>Para que <strong>${membroDraftPayload.nome}</strong> seja promovido(a) a Líder, o líder responsável <strong>${liderObj.nome}</strong> precisa ter uma Célula de Liderança cadastrada. Preencha os dados abaixo:</span>
+                  </div>
+
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+                    <div class="input-group">
+                      <label class="input-label">Líder da Célula</label>
+                      <input class="input-field" type="text" value="${liderObj.nome}" readonly style="opacity:0.85;background:var(--bg-elevated);cursor:not-allowed;">
+                    </div>
+                    <div class="input-group">
+                      <label class="input-label">Finalidade da Célula</label>
+                      <input class="input-field" type="text" value="Liderança" readonly style="opacity:0.85;background:var(--bg-elevated);color:var(--warning);font-weight:700;cursor:not-allowed;">
+                    </div>
+                  </div>
+
+                  <!-- Dia e Horário -->
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+                    <div class="input-group">
+                      <label class="input-label">Dia do Encontro *</label>
+                      <select class="input-field" name="diaSemana" required>
+                        <option value="Terça" selected>Terça-feira</option>
+                        <option value="Segunda">Segunda-feira</option>
+                        <option value="Quarta">Quarta-feira</option>
+                        <option value="Quinta">Quinta-feira</option>
+                        <option value="Sexta">Sexta-feira</option>
+                        <option value="Sábado">Sábado</option>
+                        <option value="Domingo">Domingo</option>
+                      </select>
+                    </div>
+                    <div class="input-group">
+                      <label class="input-label">Horário *</label>
+                      <input class="input-field" type="time" name="horario" value="19:30" required>
+                    </div>
+                  </div>
+
+                  <!-- Endereço da Célula -->
+                  <div style="font-size:0.8rem;font-weight:700;color:var(--text-secondary);margin-top:4px;padding-top:8px;border-top:1px solid var(--border-subtle);">
+                    LOCAL / ENDEREÇO DA CÉLULA DE LIDERANÇA
+                  </div>
+
+                  <div class="input-group">
+                    <label class="input-label">Tipo de Endereço *</label>
+                    <select class="input-field" name="tipoEndereco" onchange="WavePages['admin-membros'].onTipoEnderecoLiderancaChange(this.value)" required>
+                      <option value="residencial" selected>Endereço Residencial do Líder (${liderObj.nome})</option>
+                      <option value="igreja">Igreja Wave (Comunidade Cristã Wave)</option>
+                      <option value="outro">Outro Endereço</option>
+                    </select>
+                  </div>
+
+                  <div id="bloco-endereco-lideranca" style="display:flex;flex-direction:column;gap:var(--space-md);">
+                    <div style="display:grid;grid-template-columns:3fr 1fr;gap:var(--space-md);">
+                      <div class="input-group">
+                        <label class="input-label">Rua / Logradouro</label>
+                        <input class="input-field" type="text" name="rua" id="input-lid-rua" value="${liderObj.rua || ''}" placeholder="Ex: Av. Amazonas">
+                      </div>
+                      <div class="input-group">
+                        <label class="input-label">Nº</label>
+                        <input class="input-field" type="text" name="numero" id="input-lid-numero" value="${liderObj.numero || ''}" placeholder="123">
+                      </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+                      <div class="input-group">
+                        <label class="input-label">Bairro</label>
+                        <input class="input-field" type="text" name="bairro" id="input-lid-bairro" value="${liderObj.bairro || ''}" placeholder="Ex: Centro">
+                      </div>
+                      <div class="input-group">
+                        <label class="input-label">Cidade</label>
+                        <input class="input-field" type="text" name="cidade" id="input-lid-cidade" value="${liderObj.cidade || 'Mandaguari'}">
+                      </div>
+                    </div>
+
+                    <div class="input-group">
+                      <label class="input-label">Complemento</label>
+                      <input class="input-field" type="text" name="complemento" id="input-lid-complemento" value="${liderObj.complemento || ''}" placeholder="Ex: Apto ou Referência">
+                    </div>
+                  </div>
+
+                </div>
+
+                <div style="display:flex;gap:var(--space-md);padding-top:var(--space-md);border-top:1px solid var(--border-subtle);background:var(--bg-card);flex-shrink:0;margin-top:auto;">
+                  <button type="button" class="btn btn-secondary" onclick="WavePages['admin-membros'].cancelarModalLideranca()" style="flex:1;">
+                    Voltar
+                  </button>
+                  <button type="submit" class="btn btn-primary" style="flex:2;">
+                    <i data-lucide="check" style="width:18px;height:18px;"></i>
+                    Salvar Célula e Concluir
+                  </button>
+                </div>
+              </form>
+            `;
+          })() : ''}
         </div>
       </div>
     `;
@@ -1110,37 +1228,39 @@ WavePages['admin-membros'] = {
               <input class="input-field" type="text" value="${c.finalidade}" readonly style="background:var(--bg-input);opacity:0.85;cursor:not-allowed;" title="A finalidade não pode ser alterada após a criação.">
               <span style="font-size:0.65rem;color:var(--text-tertiary);">Imutável após criação</span>
             ` : `
-              <select class="input-field" onchange="WavePages['admin-membros']._tempCelulasForm[${idx}].finalidade = this.value" required>
+              <select class="input-field" onchange="WavePages['admin-membros'].onFinalidadeCelulaChange(${idx}, this.value)" required>
                 <option value="Evangelística" ${c.finalidade === 'Evangelística' ? 'selected' : ''}>Evangelística</option>
                 <option value="Liderança" ${c.finalidade === 'Liderança' ? 'selected' : ''}>Liderança</option>
               </select>
             `}
           </div>
 
-          <!-- Seleção de Faixa Etária -->
-          <div class="input-group">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-              <label class="input-label" style="margin-bottom:0;">Faixa Etária *</label>
-              <span style="font-size:0.75rem;color:var(--warning);font-weight:600;">${WaveData.formatFaixaEtaria(c.faixaEtaria)}</span>
+          ${c.finalidade !== 'Liderança' ? `
+            <!-- Seleção de Faixa Etária (apenas para Evangelística) -->
+            <div class="input-group">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <label class="input-label" style="margin-bottom:0;">Faixa Etária *</label>
+                <span style="font-size:0.75rem;color:var(--warning);font-weight:600;">${WaveData.formatFaixaEtaria(c.faixaEtaria)}</span>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                ${opcoesFaixas.map(faixa => {
+                  const isSel = faixasSel.includes(faixa);
+                  return `
+                    <button type="button" 
+                      onclick="WavePages['admin-membros'].toggleFaixaEtariaCelula(${idx}, '${faixa}')"
+                      class="btn btn-sm ${isSel ? 'btn-primary' : 'btn-secondary'}"
+                      style="font-size:0.75rem;padding:4px 10px;border-radius:var(--radius-full);border:1px solid ${isSel ? 'var(--white)' : 'var(--border-subtle)'};cursor:pointer;">
+                      ${isSel ? '✓ ' : ''}${faixa}
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+              <div id="aviso-faixa-erro-${idx}" style="display:${this._erroFaixaIdx === idx ? 'flex' : 'none'};align-items:center;gap:6px;margin-top:6px;color:var(--danger);font-size:0.78rem;font-weight:700;background:rgba(239, 68, 68, 0.12);padding:6px 10px;border-radius:var(--radius-sm);border:1px solid var(--danger);">
+                <i data-lucide="alert-circle" style="width:15px;height:15px;flex-shrink:0;"></i>
+                <span>A célula deve possuir ao menos 1 faixa etária selecionada.</span>
+              </div>
             </div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px;">
-              ${opcoesFaixas.map(faixa => {
-        const isSel = faixasSel.includes(faixa);
-        return `
-                  <button type="button" 
-                    onclick="WavePages['admin-membros'].toggleFaixaEtariaCelula(${idx}, '${faixa}')"
-                    class="btn btn-sm ${isSel ? 'btn-primary' : 'btn-secondary'}"
-                    style="font-size:0.75rem;padding:4px 10px;border-radius:var(--radius-full);border:1px solid ${isSel ? 'var(--white)' : 'var(--border-subtle)'};cursor:pointer;">
-                    ${isSel ? '✓ ' : ''}${faixa}
-                  </button>
-                `;
-      }).join('')}
-            </div>
-            <div id="aviso-faixa-erro-${idx}" style="display:${this._erroFaixaIdx === idx ? 'flex' : 'none'};align-items:center;gap:6px;margin-top:6px;color:var(--danger);font-size:0.78rem;font-weight:700;background:rgba(239, 68, 68, 0.12);padding:6px 10px;border-radius:var(--radius-sm);border:1px solid var(--danger);">
-              <i data-lucide="alert-circle" style="width:15px;height:15px;flex-shrink:0;"></i>
-              <span>A célula deve possuir ao menos 1 faixa etária selecionada.</span>
-            </div>
-          </div>
+          ` : ''}
 
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
             <div class="input-group">
@@ -1187,6 +1307,17 @@ WavePages['admin-membros'] = {
 
   _erroFaixaIdx: null,
   _erroFaixaTimeout: null,
+
+  onFinalidadeCelulaChange(idx, val) {
+    if (this._tempCelulasForm[idx]) {
+      this._tempCelulasForm[idx].finalidade = val;
+      const container = document.getElementById('lista-celulas-temp');
+      if (container) {
+        container.innerHTML = this.renderCelulasTempHtml();
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+  },
 
   toggleFaixaEtariaCelula(idx, faixa) {
     if (!this._tempCelulasForm[idx]) return;
@@ -1740,41 +1871,37 @@ WavePages['admin-membros'] = {
         if (!validacaoLideranca.ok) {
           const liderObj = WaveData.getMembroByNome(lider);
           const criarCelula = await WaveApp.confirm(
-            `O líder responsável "${lider}" ainda não possui uma célula de finalidade "Liderança" cadastrada.\n\nDeseja criar a célula de Liderança para "${lider}" agora? O cadastro deste discípulo será concluído logo em seguida.`,
+            `O líder responsável "${lider}" ainda não possui uma célula de finalidade "Liderança" cadastrada.\n\nDeseja configurar a célula de Liderança para "${lider}" agora?`,
             'Célula de Liderança Obrigatória',
-            { confirmText: 'Criar Célula de Liderança Agora', cancelText: 'Corrigir o Líder', type: 'warning' }
+            { confirmText: 'Configurar Célula Agora', cancelText: 'Corrigir o Líder', type: 'warning' }
           );
 
           if (criarCelula && liderObj) {
-            // Cria e persiste a célula de liderança no líder diretamente
-            const novasCelulasLider = [
-              ...(liderObj.celulas || []),
-              {
-                id: 'cel-' + Date.now() + '-lid',
-                finalidade: 'Liderança',
-                faixaEtaria: ['Adulto'],
-                diaSemana: 'Terça',
-                horario: '19:30',
-                tipoEndereco: 'residencial',
-                rua: liderObj.rua || '',
-                numero: liderObj.numero || '',
-                bairro: liderObj.bairro || '',
-                cidade: liderObj.cidade || 'Mandaguari',
-                complemento: liderObj.complemento || ''
+            // Guarda o rascunho completo do membro atual para concluir após preencher a célula de liderança
+            this._modalLiderancaData = {
+              liderObj,
+              membroDraftPayload: {
+                nome,
+                whatsapp,
+                dataNascimento,
+                dataIngresso,
+                tipoIngresso,
+                sexo,
+                rua,
+                numero,
+                bairro,
+                cidade,
+                complemento,
+                lider,
+                eLider,
+                celulas: eLider ? this._tempCelulasForm : [],
+                isEditing: this._editandoMembro,
+                membroId: idAtual
               }
-            ];
-
-            const resLider = await WaveData.updateMembro(liderObj.id, {
-              celulas: novasCelulasLider
-            });
-
-            if (resLider && resLider.ok) {
-              WaveApp.showToast(`👑 Célula de Liderança criada para ${liderObj.nome}!`, 'success');
-              // Prossegue normalmente com o salvamento do membro atual
-            } else {
-              WaveApp.showToast(`Falha ao criar célula de Liderança para ${liderObj.nome}: ${resLider?.message || 'Erro no banco.'}`, 'danger');
-              return;
-            }
+            };
+            this._showForm = false;
+            WaveApp.renderCurrentPage();
+            return;
           } else {
             // Permanece no formulário para correção do líder
             return;
@@ -1802,6 +1929,21 @@ WavePages['admin-membros'] = {
             type: 'info'
           });
           if (!confirmarTroca) return;
+        }
+      }
+
+      // Validação de segurança: se o membro editado possuir discípulos líderes, ele NÃO pode ficar sem Célula de Liderança
+      if (this._editandoMembro && this._membroDetalhes) {
+        const celulasLidNovas = (eLider ? this._tempCelulasForm : []).filter(c => c.finalidade === 'Liderança');
+        const discipulosLideres = WaveData.membros.filter(m => m.lider === this._membroDetalhes.nome && m.eLider && (m.status || 'ATIVO') === 'ATIVO' && m.id !== idAtual);
+        if (celulasLidNovas.length === 0 && discipulosLideres.length > 0) {
+          const nomes = discipulosLideres.map(d => d.nome).join(', ');
+          await WaveApp.alert(
+            `"${nome}" não pode ficar sem ao menos 1 Célula de Liderança, pois ele(a) discipula ${discipulosLideres.length} discípulo(s) que lideram células:\n\n• ${nomes}\n\nPara remover a célula de liderança de "${nome}", altere primeiro o líder responsável desses discípulos ou desmarque-os como líderes.`,
+            'Célula de Liderança em Uso',
+            'warning'
+          );
+          return;
         }
       }
 
@@ -1850,6 +1992,172 @@ WavePages['admin-membros'] = {
         submitBtn.style.opacity = '1';
         submitBtn.innerHTML = originalBtnHtml;
       }
+    }
+  },
+
+  onTipoEnderecoLiderancaChange(val) {
+    const inputRua = document.getElementById('input-lid-rua');
+    const inputNum = document.getElementById('input-lid-numero');
+    const inputBairro = document.getElementById('input-lid-bairro');
+    const inputCidade = document.getElementById('input-lid-cidade');
+    const inputCompl = document.getElementById('input-lid-complemento');
+
+    if (!this._modalLiderancaData || !this._modalLiderancaData.liderObj) return;
+    const lider = this._modalLiderancaData.liderObj;
+
+    if (val === 'residencial') {
+      if (inputRua) inputRua.value = lider.rua || '';
+      if (inputNum) inputNum.value = lider.numero || '';
+      if (inputBairro) inputBairro.value = lider.bairro || '';
+      if (inputCidade) inputCidade.value = lider.cidade || 'Mandaguari';
+      if (inputCompl) inputCompl.value = lider.complemento || '';
+    } else if (val === 'igreja') {
+      if (inputRua) inputRua.value = 'Comunidade Cristã Wave';
+      if (inputNum) inputNum.value = 's/n';
+      if (inputBairro) inputBairro.value = 'Centro';
+      if (inputCidade) inputCidade.value = 'Mandaguari';
+      if (inputCompl) inputCompl.value = 'Templo Principal';
+    } else {
+      if (inputRua) inputRua.value = '';
+      if (inputNum) inputNum.value = '';
+      if (inputBairro) inputBairro.value = '';
+      if (inputCidade) inputCidade.value = 'Mandaguari';
+      if (inputCompl) inputCompl.value = '';
+    }
+  },
+
+  cancelarModalLideranca() {
+    if (this._modalLiderancaData && this._modalLiderancaData.membroDraftPayload) {
+      // Restaura o formulário com os dados preenchidos
+      this._pendingFormState = { formData: this._modalLiderancaData.membroDraftPayload };
+      this._editandoMembro = !!this._modalLiderancaData.membroDraftPayload.isEditing;
+    }
+    this._modalLiderancaData = null;
+    this._showForm = true;
+    WaveApp.renderCurrentPage();
+  },
+
+  fecharModalLiderancaOutside(e) {
+    if (e.target.classList.contains('modal-overlay')) {
+      this.cancelarModalLideranca();
+    }
+  },
+
+  async salvarModalLiderancaSubmit(e) {
+    e.preventDefault();
+    if (!this._modalLiderancaData) return;
+
+    const form = e.target;
+    const data = new FormData(form);
+    const { liderObj, membroDraftPayload } = this._modalLiderancaData;
+
+    const diaSemana = data.get('diaSemana');
+    const horario = data.get('horario');
+    const tipoEndereco = data.get('tipoEndereco') || 'residencial';
+    const rua = (data.get('rua') || '').trim();
+    const numero = (data.get('numero') || '').trim();
+    const bairro = (data.get('bairro') || '').trim();
+    const cidade = (data.get('cidade') || '').trim() || 'Mandaguari';
+    const complemento = (data.get('complemento') || '').trim();
+
+    if (!diaSemana || !horario) {
+      await WaveApp.alert('Por favor, informe o Dia do Encontro e o Horário da célula.', 'Campos Obrigatórios', 'warning');
+      return;
+    }
+
+    if (tipoEndereco !== 'igreja' && (!rua || !numero || !bairro || !cidade)) {
+      await WaveApp.alert('Por favor, preencha o endereço completo da célula (Rua, Número, Bairro e Cidade).', 'Endereço Incompleto', 'warning');
+      return;
+    }
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<i data-lucide="loader-2" class="spin" style="width:18px;height:18px;"></i> Salvando...`;
+      if (window.lucide) lucide.createIcons();
+    }
+
+    try {
+      const novaCelulaLideranca = {
+        id: 'cel-' + Date.now() + '-lid',
+        finalidade: 'Liderança',
+        faixaEtaria: [],
+        diaSemana,
+        horario,
+        tipoEndereco,
+        rua,
+        numero,
+        bairro,
+        cidade,
+        complemento
+      };
+
+      const novasCelulasLider = [
+        ...(liderObj.celulas || []),
+        novaCelulaLideranca
+      ];
+
+      const resLider = await WaveData.updateMembro(liderObj.id, {
+        celulas: novasCelulasLider
+      });
+
+      if (!resLider || !resLider.ok) {
+        WaveApp.showToast(`Falha ao criar Célula de Liderança: ${resLider?.message || 'Erro no banco.'}`, 'danger');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<i data-lucide="check" style="width:18px;height:18px;"></i> Salvar Célula e Concluir`;
+          if (window.lucide) lucide.createIcons();
+        }
+        return;
+      }
+
+      WaveApp.showToast(`👑 Célula de Liderança criada para ${liderObj.nome}!`, 'success');
+
+      // 2. Agora salva o membro
+      const payloadMembro = {
+        nome: membroDraftPayload.nome,
+        whatsapp: membroDraftPayload.whatsapp,
+        dataNascimento: membroDraftPayload.dataNascimento,
+        dataIngresso: membroDraftPayload.dataIngresso,
+        tipoIngresso: membroDraftPayload.tipoIngresso,
+        sexo: membroDraftPayload.sexo,
+        rua: membroDraftPayload.rua,
+        numero: membroDraftPayload.numero,
+        bairro: membroDraftPayload.bairro,
+        cidade: membroDraftPayload.cidade,
+        complemento: membroDraftPayload.complemento,
+        lider: membroDraftPayload.lider,
+        eLider: membroDraftPayload.eLider,
+        celulas: membroDraftPayload.celulas
+      };
+
+      if (membroDraftPayload.isEditing && membroDraftPayload.membroId) {
+        const resMembro = await WaveData.updateMembro(membroDraftPayload.membroId, payloadMembro);
+        if (!resMembro.ok) {
+          WaveApp.showToast(`❌ Falha ao atualizar dados de ${membroDraftPayload.nome}: ${resMembro.message}`, 'danger');
+          return;
+        }
+        WaveApp.showToast(`✅ Dados de ${membroDraftPayload.nome} atualizados com sucesso!`, 'success');
+      } else {
+        payloadMembro.id = 'm-' + Date.now();
+        payloadMembro.status = 'ATIVO';
+        const resMembro = await WaveData.addMembro(payloadMembro);
+        if (!resMembro.ok) {
+          WaveApp.showToast(`❌ Falha ao cadastrar ${membroDraftPayload.nome}: ${resMembro.message}`, 'danger');
+          return;
+        }
+        WaveApp.showToast(`✅ Discípulo ${membroDraftPayload.nome} cadastrado com sucesso!`, 'success');
+      }
+
+      this._modalLiderancaData = null;
+      this._pendingFormState = null;
+      this._showForm = false;
+      this._editandoMembro = false;
+      this._membroDetalhes = null;
+      WaveApp.renderCurrentPage();
+    } catch (err) {
+      console.error('Erro ao salvar célula de liderança e membro:', err);
+      WaveApp.showToast('Erro ao processar salvamento.', 'danger');
     }
   }
 };
