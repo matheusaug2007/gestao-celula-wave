@@ -23,6 +23,8 @@ WavePages['admin-membros'] = {
   _editandoMembro: false,
   _membroParaRedistribuir: null,
   _membroParaReativar: null,
+  _reativarComoLider: false,
+  _reativarFaixasSelecionadas: ['Adulto'],
   _confirmacaoTrocaLider: null,
   _pendingFormState: null, // BUG-02: preserva dados do form durante fluxo auxiliar de célula
   _modalLiderancaData: null, // Modal de criação de célula de liderança do líder
@@ -878,28 +880,28 @@ WavePages['admin-membros'] = {
         </div>
       </div>
 
-      <!-- Modal de Reativação com Pergunta de Liderança (Ponto 4) -->
+      <!-- Modal de Reativação com Pergunta de Liderança (CT-MEM-09: Nova Célula Obrigatória ao Reativar Líder) -->
       <div class="modal-overlay ${this._membroParaReativar ? 'open' : ''}">
-        <div class="modal-sheet">
+        <div class="modal-sheet" style="max-width:580px;max-height:88vh;display:flex;flex-direction:column;padding:var(--space-xl) var(--space-xl) var(--space-md) var(--space-xl);">
           <div class="sheet-handle"></div>
           <div class="sheet-header">
             <h3 class="sheet-title">Reativar Discípulo</h3>
-            <button class="sheet-close" onclick="WavePages['admin-membros']._membroParaReativar = null; WaveApp.renderCurrentPage();">
+            <button class="sheet-close" onclick="WavePages['admin-membros']._membroParaReativar = null; WavePages['admin-membros']._reativarComoLider = false; WaveApp.renderCurrentPage();">
               <i data-lucide="x" style="width:18px;height:18px;"></i>
             </button>
           </div>
 
           ${this._membroParaReativar ? `
-            <div style="display:flex;flex-direction:column;gap:var(--space-md);">
-              <p style="font-size:0.9rem;color:var(--text-primary);">
+            <div style="overflow-y:auto;padding-right:4px;display:flex;flex-direction:column;gap:var(--space-md);">
+              <p style="font-size:0.9rem;color:var(--text-primary);margin:0;">
                 Você está reativando o cadastro de <strong>${this._membroParaReativar.nome}</strong>.
               </p>
 
               <div class="input-group">
                 <label class="input-label">Reativar também como líder de célula? *</label>
-                <select class="input-field" id="reativar-como-lider-select">
-                  <option value="nao" selected>Não (Reativar como discípulo comum)</option>
-                  <option value="sim">Sim (Reativar como líder de célula)</option>
+                <select class="input-field" id="reativar-como-lider-select" onchange="WavePages['admin-membros'].onReativarComoLiderChange(this.value)">
+                  <option value="nao" ${!this._reativarComoLider ? 'selected' : ''}>Não (Reativar como discípulo comum)</option>
+                  <option value="sim" ${this._reativarComoLider ? 'selected' : ''}>Sim (Reativar como líder de célula)</option>
                 </select>
               </div>
 
@@ -910,8 +912,99 @@ WavePages['admin-membros'] = {
                 </select>
               </div>
 
+              ${this._reativarComoLider ? `
+                <!-- CT-MEM-09: Configuração Obrigatória da Nova Célula Evangelística -->
+                <div style="background:var(--bg-elevated);padding:var(--space-md);border-radius:var(--radius-md);border:1px solid var(--border-subtle);display:flex;flex-direction:column;gap:var(--space-sm);">
+                  <span style="font-size:0.85rem;font-weight:700;color:var(--white);display:flex;align-items:center;gap:6px;">
+                    👑 Nova Célula Evangelística (Obrigatória)
+                  </span>
+                  <span style="font-size:0.75rem;color:var(--text-tertiary);">
+                    Como o membro está voltando a liderar, configure a nova célula ativa (as células antigas não retornam):
+                  </span>
+
+                  <!-- Faixa Etária -->
+                  <div class="input-group" style="margin-top:4px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                      <label class="input-label" style="margin-bottom:0;">Público / Faixa Etária *</label>
+                      <span style="font-size:0.75rem;color:var(--warning);font-weight:600;">${(this._reativarFaixasSelecionadas || []).join(', ')}</span>
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                      ${['Kids', 'Teens', 'Adolescente', 'Jovem Adulto', 'Adulto'].map(faixa => {
+                        const isSel = (this._reativarFaixasSelecionadas || []).includes(faixa);
+                        return `
+                          <button type="button" 
+                            onclick="WavePages['admin-membros'].toggleFaixaReativacao('${faixa}')"
+                            class="btn btn-sm ${isSel ? 'btn-primary' : 'btn-secondary'}"
+                            style="font-size:0.75rem;padding:4px 10px;border-radius:var(--radius-full);border:1px solid ${isSel ? 'var(--white)' : 'var(--border-subtle)'};cursor:pointer;">
+                            ${isSel ? '✓ ' : ''}${faixa}
+                          </button>
+                        `;
+                      }).join('')}
+                    </div>
+                  </div>
+
+                  <!-- Dia e Horário -->
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+                    <div class="input-group">
+                      <label class="input-label">Dia da Célula *</label>
+                      <select class="input-field" id="reativar-celula-dia">
+                        <option value="Quinta" selected>Quinta-feira</option>
+                        <option value="Terça">Terça-feira</option>
+                        <option value="Quarta">Quarta-feira</option>
+                        <option value="Sexta">Sexta-feira</option>
+                        <option value="Sábado">Sábado</option>
+                        <option value="Domingo">Domingo</option>
+                        <option value="Segunda">Segunda-feira</option>
+                      </select>
+                    </div>
+                    <div class="input-group">
+                      <label class="input-label">Horário * (HH:mm)</label>
+                      <input class="input-field" type="text" id="reativar-celula-horario" value="20:00" placeholder="20:00" maxlength="5">
+                    </div>
+                  </div>
+
+                  <!-- Tipo de Endereço -->
+                  <div class="input-group">
+                    <label class="input-label">Endereço da Célula *</label>
+                    <select class="input-field" id="reativar-celula-tipo-endereco" onchange="WavePages['admin-membros'].onTipoEnderecoReativacaoChange(this.value)">
+                      <option value="residencial" selected>Endereço Residencial do Líder</option>
+                      <option value="igreja">Templo / Igreja</option>
+                      <option value="outro">Outro Endereço</option>
+                    </select>
+                  </div>
+
+                  <!-- Campos se for outro endereço -->
+                  <div id="reativar-celula-campos-endereco" style="display:none;flex-direction:column;gap:var(--space-sm);">
+                    <div style="display:grid;grid-template-columns:2fr 1fr;gap:var(--space-sm);">
+                      <div class="input-group">
+                        <label class="input-label">Rua / Logradouro *</label>
+                        <input class="input-field" type="text" id="reativar-celula-rua" placeholder="Ex: Rua Brasil">
+                      </div>
+                      <div class="input-group">
+                        <label class="input-label">Número *</label>
+                        <input class="input-field" type="text" id="reativar-celula-numero" placeholder="123">
+                      </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-sm);">
+                      <div class="input-group">
+                        <label class="input-label">Bairro *</label>
+                        <input class="input-field" type="text" id="reativar-celula-bairro" placeholder="Centro">
+                      </div>
+                      <div class="input-group">
+                        <label class="input-label">Cidade *</label>
+                        <input class="input-field" type="text" id="reativar-celula-cidade" value="Mandaguari">
+                      </div>
+                    </div>
+                    <div class="input-group">
+                      <label class="input-label">Complemento</label>
+                      <input class="input-field" type="text" id="reativar-celula-complemento" placeholder="Apto, Bloco...">
+                    </div>
+                  </div>
+                </div>
+              ` : ''}
+
               <div style="display:flex;gap:var(--space-md);margin-top:var(--space-md);">
-                <button class="btn btn-secondary" onclick="WavePages['admin-membros']._membroParaReativar = null; WaveApp.renderCurrentPage();" style="flex:1;">
+                <button class="btn btn-secondary" onclick="WavePages['admin-membros']._membroParaReativar = null; WavePages['admin-membros']._reativarComoLider = false; WaveApp.renderCurrentPage();" style="flex:1;">
                   Cancelar
                 </button>
                 <button class="btn btn-primary" onclick="WavePages['admin-membros'].confirmarReativacao()" style="flex:1;">
@@ -1786,29 +1879,123 @@ WavePages['admin-membros'] = {
     }
   },
 
+  onReativarComoLiderChange(val) {
+    this._reativarComoLider = (val === 'sim');
+    if (!this._reativarFaixasSelecionadas || this._reativarFaixasSelecionadas.length === 0) {
+      this._reativarFaixasSelecionadas = ['Adulto'];
+    }
+    WaveApp.renderCurrentPage();
+  },
+
+  toggleFaixaReativacao(faixa) {
+    if (!this._reativarFaixasSelecionadas) this._reativarFaixasSelecionadas = ['Adulto'];
+    if (this._reativarFaixasSelecionadas.includes(faixa)) {
+      if (this._reativarFaixasSelecionadas.length > 1) {
+        this._reativarFaixasSelecionadas = this._reativarFaixasSelecionadas.filter(f => f !== faixa);
+      } else {
+        WaveApp.showToast('A célula deve possuir ao menos 1 faixa etária selecionada.', 'warning');
+        return;
+      }
+    } else {
+      this._reativarFaixasSelecionadas.push(faixa);
+    }
+    WaveApp.renderCurrentPage();
+  },
+
+  onTipoEnderecoReativacaoChange(val) {
+    const container = document.getElementById('reativar-celula-campos-endereco');
+    if (container) {
+      container.style.display = (val === 'outro') ? 'flex' : 'none';
+    }
+  },
+
   async confirmarReativacao() {
     if (!this._membroParaReativar) return;
 
-    const comoLiderSelect = document.getElementById('reativar-como-lider-select');
+    const reativarComoLider = this._reativarComoLider;
     const liderRespSelect = document.getElementById('reativar-lider-responsavel-select');
-
-    const reativarComoLider = comoLiderSelect ? comoLiderSelect.value === 'sim' : false;
     const novoLider = liderRespSelect ? liderRespSelect.value : '—';
 
-    // Se reativar como líder, cria 1 célula evangelística padrão
-    const novasCelulas = reativarComoLider ? [{
-      id: 'cel-' + Date.now(),
-      finalidade: 'Evangelística',
-      faixaEtaria: 'Adulto',
-      diaSemana: 'Quinta',
-      horario: '20:00',
-      tipoEndereco: 'residencial'
-    }] : [];
+    if (!novoLider || novoLider === '—') {
+      await WaveApp.alert('Por favor, selecione um Líder Responsável para o discípulo.', 'Líder Obrigatório', 'warning');
+      return;
+    }
+
+    let novasCelulas = [];
+
+    if (reativarComoLider) {
+      // CT-MEM-09: Validações estritas da nova célula Evangelística
+      if (!this._reativarFaixasSelecionadas || this._reativarFaixasSelecionadas.length === 0) {
+        await WaveApp.alert('Por favor, selecione ao menos uma Faixa Etária para a nova Célula Evangelística.', 'Faixa Etária Obrigatória', 'warning');
+        return;
+      }
+
+      const diaEl = document.getElementById('reativar-celula-dia');
+      const horarioEl = document.getElementById('reativar-celula-horario');
+      const tipoEndEl = document.getElementById('reativar-celula-tipo-endereco');
+
+      const diaSemana = diaEl ? diaEl.value : 'Quinta';
+      const horario = horarioEl ? horarioEl.value.trim() : '';
+      const tipoEndereco = tipoEndEl ? tipoEndEl.value : 'residencial';
+
+      if (!diaSemana || !horario) {
+        await WaveApp.alert('Por favor, defina o Dia do Encontro e o Horário da nova célula.', 'Campos Obrigatórios', 'warning');
+        return;
+      }
+
+      let rua = '', numero = '', bairro = '', cidade = 'Mandaguari', complemento = '';
+
+      if (tipoEndereco === 'outro') {
+        const ruaEl = document.getElementById('reativar-celula-rua');
+        const numEl = document.getElementById('reativar-celula-numero');
+        const bairroEl = document.getElementById('reativar-celula-bairro');
+        const cidadeEl = document.getElementById('reativar-celula-cidade');
+        const complEl = document.getElementById('reativar-celula-complemento');
+
+        rua = ruaEl ? ruaEl.value.trim() : '';
+        numero = numEl ? numEl.value.trim() : '';
+        bairro = bairroEl ? bairroEl.value.trim() : '';
+        cidade = cidadeEl ? cidadeEl.value.trim() || 'Mandaguari' : 'Mandaguari';
+        complemento = complEl ? complEl.value.trim() : '';
+
+        if (!rua || !numero || !bairro || !cidade) {
+          await WaveApp.alert('Por favor, preencha o endereço completo da nova célula (Rua, Número, Bairro e Cidade).', 'Endereço Incompleto', 'warning');
+          return;
+        }
+      } else if (tipoEndereco === 'igreja') {
+        rua = 'Comunidade Cristã Wave';
+        numero = 's/n';
+        bairro = 'Centro';
+        cidade = 'Mandaguari';
+        complemento = 'Templo Principal';
+      } else {
+        rua = this._membroParaReativar.rua || '';
+        numero = this._membroParaReativar.numero || '';
+        bairro = this._membroParaReativar.bairro || '';
+        cidade = this._membroParaReativar.cidade || 'Mandaguari';
+        complemento = this._membroParaReativar.complemento || '';
+      }
+
+      novasCelulas = [{
+        id: 'cel-' + Date.now(),
+        finalidade: 'Evangelística',
+        faixaEtaria: this._reativarFaixasSelecionadas,
+        diaSemana,
+        horario,
+        tipoEndereco,
+        rua,
+        numero,
+        bairro,
+        cidade,
+        complemento
+      }];
+    }
 
     const res = await WaveData.reativarMembro(this._membroParaReativar.id, novoLider, reativarComoLider, novasCelulas);
     if (res && res.ok) {
       const nome = this._membroParaReativar.nome;
       this._membroParaReativar = null;
+      this._reativarComoLider = false;
       WaveApp.showToast(`✅ ${nome} foi reativado(a) com sucesso!`, 'success');
       WaveApp.renderCurrentPage();
     } else {

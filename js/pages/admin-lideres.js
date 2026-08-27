@@ -18,6 +18,7 @@ WavePages['admin-lideres'] = {
   _showColunasDropdown: false,
   _liderSelecionado: null,
   _editandoLider: false,
+  _fecharCelulaComRedistribuicao: null, // CT-CEL-02: Modal de redistribuição ao fechar célula com discípulos
 
   // Colunas disponíveis para seleção dinâmica (Ponto 19)
   _availableCols: [
@@ -577,6 +578,80 @@ WavePages['admin-lideres'] = {
           })() : ''}
         </div>
       </div>
+
+      <!-- Modal de Redistribuição ao Fechar Célula (CT-CEL-02 / Ponto 20) -->
+      <div class="modal-overlay ${this._fecharCelulaComRedistribuicao ? 'open' : ''}" style="z-index: 100000;">
+        <div class="modal-sheet" style="max-width:620px;max-height:88vh;display:flex;flex-direction:column;padding:var(--space-xl) var(--space-xl) var(--space-md) var(--space-xl);">
+          <div class="sheet-handle"></div>
+          <div class="sheet-header">
+            <h3 class="sheet-title" style="color:var(--danger);display:flex;align-items:center;gap:6px;">
+              <i data-lucide="shuffle" style="width:20px;height:20px;"></i> Redistribuir Discípulos ao Fechar Célula
+            </h3>
+            <button class="sheet-close" onclick="WavePages['admin-lideres']._fecharCelulaComRedistribuicao = null; WaveApp.renderCurrentPage();">
+              <i data-lucide="x" style="width:18px;height:18px;"></i>
+            </button>
+          </div>
+
+          ${this._fecharCelulaComRedistribuicao ? (() => {
+            const { lider, celula, discipulos } = this._fecharCelulaComRedistribuicao;
+            const lideresMesmoSexo = WaveData.getLideresPorSexo(lider.sexo);
+
+            return `
+              <div style="overflow-y:auto;padding-right:4px;display:flex;flex-direction:column;gap:var(--space-md);">
+                <p style="font-size:0.85rem;color:var(--text-secondary);line-height:1.4;margin:0;">
+                  A Célula <strong>${celula.finalidade}</strong> (${celula.diaSemana} às ${celula.horario}) de <strong>${lider.nome}</strong> possui <strong>${discipulos.length} discípulo(s) ativo(s)</strong> vinculados.
+                  <br>Defina o destino de cada discípulo antes de confirmar o encerramento desta célula:
+                </p>
+
+                <!-- Atalho para aplicar o mesmo líder a todos -->
+                <div style="background:var(--bg-elevated);padding:10px 12px;border-radius:var(--radius-md);border:1px solid var(--border-subtle);display:flex;align-items:center;gap:var(--space-md);justify-content:space-between;flex-wrap:wrap;">
+                  <span style="font-size:0.8rem;color:var(--text-secondary);font-weight:600;">Definir o mesmo destino para todos:</span>
+                  <select class="input-field" style="max-width:240px;font-size:0.8rem;padding:6px 10px;" onchange="WavePages['admin-lideres'].aplicarLiderParaTodosRedistribuicao(this.value)">
+                    <option value="">Selecione um líder...</option>
+                    ${lideresMesmoSexo.map(l => `<option value="${l.nome}">${l.nome} ${l.nome === lider.nome ? '(Manter na outra célula)' : ''}</option>`).join('')}
+                  </select>
+                </div>
+
+                <!-- Lista Individual de Discípulos -->
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  ${discipulos.map((d, idx) => `
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-md);padding:10px 12px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius-md);flex-wrap:wrap;">
+                      <div style="display:flex;align-items:center;gap:8px;min-width:180px;">
+                        <div style="width:28px;height:28px;border-radius:var(--radius-full);background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.75rem;border:1px solid var(--border-subtle);">
+                          ${d.nome.charAt(0)}
+                        </div>
+                        <div>
+                          <strong style="font-size:0.82rem;color:var(--white);display:block;">${d.nome}</strong>
+                          <span style="font-size:0.68rem;color:var(--text-tertiary);">${d.whatsapp || 'Sem WhatsApp'}</span>
+                        </div>
+                      </div>
+
+                      <div style="flex:1;min-width:200px;">
+                        <select class="input-field select-redistribuir-celula-individual" data-discipulo-id="${d.id}" style="font-size:0.8rem;padding:6px 10px;" required>
+                          ${lideresMesmoSexo.map(l => `
+                            <option value="${l.nome}" data-lider-id="${l.id}" ${l.nome === lider.nome ? 'selected' : ''}>
+                              ${l.nome} ${l.nome === lider.nome ? '(Manter na outra célula)' : ''}
+                            </option>
+                          `).join('')}
+                        </select>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+
+                <div style="display:flex;gap:var(--space-md);margin-top:var(--space-md);padding-top:var(--space-sm);border-top:1px solid var(--border-subtle);">
+                  <button class="btn btn-secondary" onclick="WavePages['admin-lideres']._fecharCelulaComRedistribuicao = null; WaveApp.renderCurrentPage();" style="flex:1;">
+                    Cancelar
+                  </button>
+                  <button class="btn btn-primary" onclick="WavePages['admin-lideres'].confirmarRedistribuicaoEFecharCelula()" style="flex:1.2;background:var(--danger);border-color:var(--danger);">
+                    <i data-lucide="check-circle" style="width:16px;height:16px;"></i> Confirmar e Encerrar Célula
+                  </button>
+                </div>
+              </div>
+            `;
+          })() : ''}
+        </div>
+      </div>
     `;
   },
 
@@ -821,7 +896,55 @@ WavePages['admin-lideres'] = {
     }, 60);
   },
 
-  // Ponto 20 (v1.3): Fechar uma célula individual
+  aplicarLiderParaTodosRedistribuicao(liderNome) {
+    if (!liderNome) return;
+    const selects = document.querySelectorAll('.select-redistribuir-celula-individual');
+    selects.forEach(sel => {
+      sel.value = liderNome;
+    });
+  },
+
+  async confirmarRedistribuicaoEFecharCelula() {
+    if (!this._fecharCelulaComRedistribuicao) return;
+    const { liderId, celulaId, lider, celula } = this._fecharCelulaComRedistribuicao;
+
+    const selects = document.querySelectorAll('.select-redistribuir-celula-individual');
+    const mapa = [];
+
+    selects.forEach(sel => {
+      const discipuloId = sel.getAttribute('data-discipulo-id');
+      const novoLiderNome = sel.value;
+      const opt = sel.options[sel.selectedIndex];
+      const novoLiderId = opt ? opt.getAttribute('data-lider-id') : null;
+
+      // Se o discípulo foi redistribuído para outro líder diferente do original
+      if (novoLiderNome && novoLiderNome !== lider.nome) {
+        mapa.push({ discipuloId, novoLiderNome, novoLiderId });
+      }
+    });
+
+    if (mapa.length > 0) {
+      const resRedist = await WaveData.redistribuirDiscipulos(mapa);
+      if (!resRedist || !resRedist.ok) {
+        WaveApp.showToast(`❌ Falha ao redistribuir discípulos: ${resRedist?.message || 'Erro no banco.'}`, 'danger');
+        return;
+      }
+    }
+
+    const res = await WaveData.fecharCelulaIndividual(liderId, celulaId);
+    if (res.ok) {
+      this._fecharCelulaComRedistribuicao = null;
+      WaveApp.showToast(`✅ Célula encerrada com sucesso! ${mapa.length > 0 ? `(${mapa.length} discípulo(s) transferidos)` : ''}`, 'success');
+      if (this._liderSelecionado && this._liderSelecionado.id === liderId) {
+        this._liderSelecionado = WaveData.getMembroById(liderId);
+      }
+      WaveApp.renderCurrentPage();
+    } else {
+      await WaveApp.alert(res.message, 'Erro ao Encerrar Célula', 'danger');
+    }
+  },
+
+  // Ponto 20 (v1.3) / CT-CEL-02: Fechar uma célula individual
   async fecharCelulaIndividualClick(liderId, celulaId) {
     const lider = WaveData.getMembroById(liderId);
     if (!lider) return;
@@ -849,6 +972,20 @@ WavePages['admin-lideres'] = {
         );
         return;
       }
+    }
+
+    // CT-CEL-02: Se a célula fechada for Evangelística e o líder possuir discípulos ativos vinculados, EXIGE redistribuição
+    const discipulos = WaveData.getDiscipulosByLider(lider.nome);
+    if (celula.finalidade === 'Evangelística' && discipulos.length > 0) {
+      this._fecharCelulaComRedistribuicao = {
+        liderId,
+        celulaId,
+        lider,
+        celula,
+        discipulos
+      };
+      WaveApp.renderCurrentPage();
+      return;
     }
 
     const confirmar = await WaveApp.confirm(`Deseja realmente encerrar a Célula ${celula.finalidade} (${celula.diaSemana} às ${celula.horario}) de ${lider.nome}?`, 'Encerrar Célula', {
