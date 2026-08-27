@@ -940,6 +940,10 @@ WavePages['admin-membros'] = {
                         `;
                       }).join('')}
                     </div>
+                    <div id="aviso-faixa-erro-reativacao" style="display:none;align-items:center;gap:6px;margin-top:6px;color:var(--danger);font-size:0.78rem;font-weight:700;background:rgba(239, 68, 68, 0.12);padding:6px 10px;border-radius:var(--radius-sm);border:1px solid var(--danger);">
+                      <i data-lucide="alert-circle" style="width:15px;height:15px;flex-shrink:0;"></i>
+                      <span>A célula deve possuir ao menos 1 faixa etária selecionada.</span>
+                    </div>
                   </div>
 
                   <!-- Dia e Horário -->
@@ -1899,22 +1903,35 @@ WavePages['admin-membros'] = {
     }
   },
 
+  _erroFaixaReativacaoTimeout: null,
+
   toggleFaixaReativacao(faixa, btn) {
+    const avisoEl = document.getElementById('aviso-faixa-erro-reativacao');
     if (!this._reativarFaixasSelecionadas) this._reativarFaixasSelecionadas = ['Adulto'];
     if (this._reativarFaixasSelecionadas.includes(faixa)) {
       if (this._reativarFaixasSelecionadas.length > 1) {
         this._reativarFaixasSelecionadas = this._reativarFaixasSelecionadas.filter(f => f !== faixa);
+        if (avisoEl) avisoEl.style.display = 'none';
         if (btn) {
           btn.className = 'btn btn-sm btn-secondary';
           btn.innerHTML = faixa;
           btn.style.border = '1px solid var(--border-subtle)';
         }
       } else {
-        WaveApp.showToast('A célula deve possuir ao menos 1 faixa etária selecionada.', 'warning');
+        // Exibe o aviso inline diretamente dentro do modal
+        if (avisoEl) {
+          avisoEl.style.display = 'flex';
+          if (window.lucide) lucide.createIcons();
+          if (this._erroFaixaReativacaoTimeout) clearTimeout(this._erroFaixaReativacaoTimeout);
+          this._erroFaixaReativacaoTimeout = setTimeout(() => {
+            if (avisoEl) avisoEl.style.display = 'none';
+          }, 3500);
+        }
         return;
       }
     } else {
       this._reativarFaixasSelecionadas.push(faixa);
+      if (avisoEl) avisoEl.style.display = 'none';
       if (btn) {
         btn.className = 'btn btn-sm btn-primary';
         btn.innerHTML = '✓ ' + faixa;
