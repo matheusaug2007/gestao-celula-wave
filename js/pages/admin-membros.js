@@ -912,9 +912,8 @@ WavePages['admin-membros'] = {
                 </select>
               </div>
 
-              ${this._reativarComoLider ? `
                 <!-- CT-MEM-09: Configuração Obrigatória da Nova Célula Evangelística -->
-                <div style="background:var(--bg-elevated);padding:var(--space-md);border-radius:var(--radius-md);border:1px solid var(--border-subtle);display:flex;flex-direction:column;gap:var(--space-sm);">
+                <div id="container-nova-celula-reativacao" style="display: ${this._reativarComoLider ? 'flex' : 'none'}; background:var(--bg-elevated);padding:var(--space-md);border-radius:var(--radius-md);border:1px solid var(--border-subtle);flex-direction:column;gap:var(--space-sm);">
                   <span style="font-size:0.85rem;font-weight:700;color:var(--white);display:flex;align-items:center;gap:6px;">
                     👑 Nova Célula Evangelística (Obrigatória)
                   </span>
@@ -926,14 +925,14 @@ WavePages['admin-membros'] = {
                   <div class="input-group" style="margin-top:4px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
                       <label class="input-label" style="margin-bottom:0;">Público / Faixa Etária *</label>
-                      <span style="font-size:0.75rem;color:var(--warning);font-weight:600;">${(this._reativarFaixasSelecionadas || []).join(', ')}</span>
+                      <span id="reativar-faixas-resumo" style="font-size:0.75rem;color:var(--warning);font-weight:600;">${(this._reativarFaixasSelecionadas || []).join(', ')}</span>
                     </div>
                     <div style="display:flex;flex-wrap:wrap;gap:6px;">
                       ${['Kids', 'Teens', 'Adolescente', 'Jovem Adulto', 'Adulto'].map(faixa => {
                         const isSel = (this._reativarFaixasSelecionadas || []).includes(faixa);
                         return `
                           <button type="button" 
-                            onclick="WavePages['admin-membros'].toggleFaixaReativacao('${faixa}')"
+                            onclick="WavePages['admin-membros'].toggleFaixaReativacao('${faixa}', this)"
                             class="btn btn-sm ${isSel ? 'btn-primary' : 'btn-secondary'}"
                             style="font-size:0.75rem;padding:4px 10px;border-radius:var(--radius-full);border:1px solid ${isSel ? 'var(--white)' : 'var(--border-subtle)'};cursor:pointer;">
                             ${isSel ? '✓ ' : ''}${faixa}
@@ -959,7 +958,7 @@ WavePages['admin-membros'] = {
                     </div>
                     <div class="input-group">
                       <label class="input-label">Horário * (HH:mm)</label>
-                      <input class="input-field" type="text" id="reativar-celula-horario" value="20:00" placeholder="20:00" maxlength="5">
+                      <input class="input-field" type="text" id="reativar-celula-horario" value="20:00" placeholder="20:00" maxlength="5" oninput="WavePages['admin-membros'].maskTimeSimple(this)">
                     </div>
                   </div>
 
@@ -1001,7 +1000,6 @@ WavePages['admin-membros'] = {
                     </div>
                   </div>
                 </div>
-              ` : ''}
 
               <div style="display:flex;gap:var(--space-md);margin-top:var(--space-md);">
                 <button class="btn btn-secondary" onclick="WavePages['admin-membros']._membroParaReativar = null; WavePages['admin-membros']._reativarComoLider = false; WaveApp.renderCurrentPage();" style="flex:1;">
@@ -1879,27 +1877,54 @@ WavePages['admin-membros'] = {
     }
   },
 
-  onReativarComoLiderChange(val) {
-    this._reativarComoLider = (val === 'sim');
-    if (!this._reativarFaixasSelecionadas || this._reativarFaixasSelecionadas.length === 0) {
-      this._reativarFaixasSelecionadas = ['Adulto'];
+  maskTimeSimple(input) {
+    let v = input.value.replace(/\D/g, '');
+    if (v.length > 4) v = v.slice(0, 4);
+    if (v.length >= 3) {
+      let hh = parseInt(v.slice(0, 2), 10);
+      let mm = parseInt(v.slice(2, 4), 10);
+      if (hh > 23) hh = 23;
+      if (mm > 59) mm = 59;
+      input.value = String(hh).padStart(2, '0') + ':' + v.slice(2, 4);
+    } else if (v.length >= 1) {
+      input.value = v;
     }
-    WaveApp.renderCurrentPage();
   },
 
-  toggleFaixaReativacao(faixa) {
+  onReativarComoLiderChange(val) {
+    this._reativarComoLider = (val === 'sim');
+    const container = document.getElementById('container-nova-celula-reativacao');
+    if (container) {
+      container.style.display = (val === 'sim') ? 'flex' : 'none';
+    }
+  },
+
+  toggleFaixaReativacao(faixa, btn) {
     if (!this._reativarFaixasSelecionadas) this._reativarFaixasSelecionadas = ['Adulto'];
     if (this._reativarFaixasSelecionadas.includes(faixa)) {
       if (this._reativarFaixasSelecionadas.length > 1) {
         this._reativarFaixasSelecionadas = this._reativarFaixasSelecionadas.filter(f => f !== faixa);
+        if (btn) {
+          btn.className = 'btn btn-sm btn-secondary';
+          btn.innerHTML = faixa;
+          btn.style.border = '1px solid var(--border-subtle)';
+        }
       } else {
         WaveApp.showToast('A célula deve possuir ao menos 1 faixa etária selecionada.', 'warning');
         return;
       }
     } else {
       this._reativarFaixasSelecionadas.push(faixa);
+      if (btn) {
+        btn.className = 'btn btn-sm btn-primary';
+        btn.innerHTML = '✓ ' + faixa;
+        btn.style.border = '1px solid var(--white)';
+      }
     }
-    WaveApp.renderCurrentPage();
+    const resumoEl = document.getElementById('reativar-faixas-resumo');
+    if (resumoEl) {
+      resumoEl.textContent = this._reativarFaixasSelecionadas.join(', ');
+    }
   },
 
   onTipoEnderecoReativacaoChange(val) {
